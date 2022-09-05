@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "id": "litefabric",
-  "version": "${version}",
+  "version": "0.0.0-dev",
   "name": "LiteFabric",
   "description": "Launch LiteLoader mods with Fabric",
   "authors": [
@@ -16,11 +16,8 @@
   "icon": "assets/litefabric/icon.png",
   "environment": "client",
   "entrypoints": {
-    "preLaunch": [
-      "de.skyrising.litefabric.impl.PreLaunch"
-    ],
     "modmenu": [
-      "de.skyrising.litefabric.impl.util.ModMenuCompat"
+      "de.skyrising.litefabric.runtime.ModMenuCompat"
     ]
   },
   "mixins": [
