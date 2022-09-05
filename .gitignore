@@ -1,6 +1,13 @@
-/run/
-/credentials.properties
-out/
+# brachyura
+.brachyura/
 build/
-.gradle/
+
+# idea
 .idea/
+*.iml
+#*.ipr
+#*.iws
+
+# fabric
+run/
+
