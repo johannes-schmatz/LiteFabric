@@ -8,7 +8,7 @@ public abstract class ClientPluginChannels extends PluginChannels<PluginChannelL
     protected static ClientPluginChannels instance;
 
     protected ClientPluginChannels() {
-        if (instance != null) throw new IllegalStateException();
+        if (instance != null) throw new IllegalStateException("only one instance of ClientPluginChannels is allowed.");
         instance = this;
     }
 

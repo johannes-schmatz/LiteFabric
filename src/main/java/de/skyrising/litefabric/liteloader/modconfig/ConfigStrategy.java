@@ -1,6 +1,6 @@
 package de.skyrising.litefabric.liteloader.modconfig;
 
-import de.skyrising.litefabric.impl.LiteFabric;
+import de.skyrising.litefabric.runtime.LiteFabric;
 import net.fabricmc.loader.api.FabricLoader;
 
 import java.io.File;

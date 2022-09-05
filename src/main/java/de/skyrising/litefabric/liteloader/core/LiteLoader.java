@@ -1,9 +1,9 @@
 package de.skyrising.litefabric.liteloader.core;
 
-import de.skyrising.litefabric.impl.LiteFabric;
-import de.skyrising.litefabric.impl.modconfig.ConfigManager;
+import de.skyrising.litefabric.runtime.modconfig.ConfigManager;
 import de.skyrising.litefabric.liteloader.modconfig.Exposable;
 import de.skyrising.litefabric.liteloader.util.Input;
+import de.skyrising.litefabric.runtime.LiteFabric;
 import net.fabricmc.loader.api.FabricLoader;
 
 import java.io.File;
@@ -21,7 +21,7 @@ public final class LiteLoader {
     }
 
     public static File getCommonConfigFolder() {
-        return FabricLoader.getInstance().getConfigDirectory();
+        return FabricLoader.getInstance().getConfigDir().toFile();
     }
 
     public static ClientPluginChannels getClientPluginChannels() {
