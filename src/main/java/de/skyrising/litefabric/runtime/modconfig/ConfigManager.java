@@ -1,4 +1,4 @@
-package de.skyrising.litefabric.impl.modconfig;
+package de.skyrising.litefabric.runtime.modconfig;
 
 import de.skyrising.litefabric.liteloader.LiteMod;
 import de.skyrising.litefabric.liteloader.modconfig.ConfigStrategy;

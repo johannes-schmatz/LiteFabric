@@ -1,4 +1,4 @@
-package de.skyrising.litefabric.impl.modconfig;
+package de.skyrising.litefabric.runtime.modconfig;
 
 import com.mojang.blaze3d.platform.GlStateManager;
 import de.skyrising.litefabric.liteloader.Configurable;

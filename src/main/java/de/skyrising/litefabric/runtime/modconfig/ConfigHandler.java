@@ -1,4 +1,4 @@
-package de.skyrising.litefabric.impl.modconfig;
+package de.skyrising.litefabric.runtime.modconfig;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
