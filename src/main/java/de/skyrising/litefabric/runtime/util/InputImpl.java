@@ -1,4 +1,4 @@
-package de.skyrising.litefabric.impl.util;
+package de.skyrising.litefabric.runtime.util;
 
 import de.skyrising.litefabric.liteloader.util.Input;
 import de.skyrising.litefabric.mixin.KeyBindingAccessor;

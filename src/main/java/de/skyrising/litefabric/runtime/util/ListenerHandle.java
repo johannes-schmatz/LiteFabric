@@ -1,4 +1,4 @@
-package de.skyrising.litefabric.impl.util;
+package de.skyrising.litefabric.runtime.util;
 
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
