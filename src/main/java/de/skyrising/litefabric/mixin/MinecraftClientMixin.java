@@ -1,6 +1,6 @@
 package de.skyrising.litefabric.mixin;
 
-import de.skyrising.litefabric.impl.LiteFabric;
+import de.skyrising.litefabric.runtime.LiteFabric;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.render.ClientTickTracker;
 import net.minecraft.resource.ResourcePack;
@@ -45,7 +45,7 @@ public class MinecraftClientMixin {
 
     @Inject(method = "initializeGame", at = @At(value = "INVOKE", target = "Ljava/util/List;add(Ljava/lang/Object;)Z", shift = At.Shift.AFTER, remap = false))
     private void litefabric$addResourcePacks(CallbackInfo ci) {
-        resourcePacks.addAll(LiteFabric.getInstance().getMods());
+        LiteFabric.getInstance().addResourcePacks(resourcePacks);
     }
 
     @Inject(method = "method_2923", at = @At("HEAD"))

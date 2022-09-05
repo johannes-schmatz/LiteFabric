@@ -1,4 +1,4 @@
-package de.skyrising.litefabric.impl.core;
+package de.skyrising.litefabric.runtime;
 
 import de.skyrising.litefabric.liteloader.PluginChannelListener;
 import de.skyrising.litefabric.liteloader.core.ClientPluginChannels;

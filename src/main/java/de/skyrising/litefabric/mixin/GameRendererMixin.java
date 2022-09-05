@@ -1,6 +1,6 @@
 package de.skyrising.litefabric.mixin;
 
-import de.skyrising.litefabric.impl.LiteFabric;
+import de.skyrising.litefabric.runtime.LiteFabric;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.render.GameRenderer;
 import org.spongepowered.asm.mixin.Final;

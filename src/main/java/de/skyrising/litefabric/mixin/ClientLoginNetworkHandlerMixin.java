@@ -1,6 +1,6 @@
 package de.skyrising.litefabric.mixin;
 
-import de.skyrising.litefabric.impl.LiteFabric;
+import de.skyrising.litefabric.runtime.LiteFabric;
 import net.minecraft.client.network.ClientLoginNetworkHandler;
 import net.minecraft.network.listener.ClientLoginPacketListener;
 import net.minecraft.network.packet.s2c.login.LoginSuccessS2CPacket;
