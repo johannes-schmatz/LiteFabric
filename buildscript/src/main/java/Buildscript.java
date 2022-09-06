@@ -238,26 +238,32 @@ public class Buildscript extends SimpleFabricProject {
 			}
 			ArrayList<String> command = new ArrayList<>();
 			command.add(JvmUtil.CURRENT_JAVA_EXECUTABLE);
+
 			command.addAll(rc.vmArgs.get());
+
 			command.add("-cp");
+
 			ArrayList<Path> cp = new ArrayList<>(rc.classpath.get());
 			cp.addAll(ideProject.resourcePaths);
 			cp.add(mmap.get(ideProject));
 			for (IdeModule m : rc.additionalModulesClasspath) {
 				cp.add(mmap.get(m));
 			}
+
 			StringBuilder cpStr = new StringBuilder();
 			for (Path p : cp) {
 				cpStr.append(p.toString());
 				cpStr.append(File.pathSeparator);
 			}
 			cpStr.setLength(cpStr.length() - 1);
+
 			command.add(cpStr.toString());
+
 			command.add(rc.mainClass);
+
 			command.addAll(Arrays.asList(args));
-			for (String i: command) {
-				System.out.println(i);
-			}
+
+			// run the command
 			new ProcessBuilder(command)
 					.inheritIO()
 					.start()
@@ -273,17 +279,6 @@ public class Buildscript extends SimpleFabricProject {
 
 		// patch in our own tasks
 		p.accept(Task.of("buildRun", this::buildRun));
-
-		// task to run the litefabric for remapping
-		//p.accept(Task.of("remapLiteMod", this::remapLiteMod));
-	}
-
-	// run the remapper.Main class with arguments
-	public void remapLiteMod(String[] args) {
-		for (String arg: args)
-			System.out.println(arg);
-
-		System.out.println("yes yes");
 	}
 
 	// a task of building and then running mc
@@ -338,9 +333,12 @@ public class Buildscript extends SimpleFabricProject {
 			// add a manifest containing our main class
 			jarSink.sink(() -> new StringBufferInputStream(MANIFEST_CONTENT), new ProcessingId("META-INF/MANIFEST.MF", null));
 
+			// collect the sources
 			for (Path p : module.get().getSrcDirs()) {
 				new DirectoryProcessingSource(p).getInputs(jarSourcesSink);
 			}
+
+
 			FabricModule.FabricCompilationResult compilationResult = module.get().fabricCompilationResult.get();
 
 			try {

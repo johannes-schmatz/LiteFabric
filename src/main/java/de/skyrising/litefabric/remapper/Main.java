@@ -3,89 +3,95 @@ package de.skyrising.litefabric.remapper;
 import de.skyrising.litefabric.remapper.util.LitemodRemapper;
 import net.fabricmc.mapping.tree.TinyMappingFactory;
 import net.fabricmc.mapping.tree.TinyTree;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Arrays;
 
 public class Main {
+	private static final String TINY_MAPPINGS = "mappings/mappings.tiny";
 	public static void main(String[] args) {
-		if (args.length != 3) {
+		Path inputLiteMod;
+		Path outputIntermediary;
+		@Nullable
+		Path outputNamed;
+
+		int offset = 1;
+		// TODO: remove the + offset here everywhere, when the brachyura bug is fixed, and the _ in the help text
+		if (args.length == 1 + offset) {
+			// create same file, replace liteloader in filename with fabricloader, litemod with jar
+			// also create sources, replace .jar with -sources.jar
+			inputLiteMod = Paths.get(args[0 + offset]).toAbsolutePath();
+
+			String fileName = inputLiteMod.getFileName().toString();
+			Path parent = inputLiteMod.getParent();
+
+			String intermediaryFileName = fileName.replaceAll("liteloader", "fabricloader").replaceAll("\\.litemod$", ".jar");
+			String namedFileName = intermediaryFileName.replaceAll("\\.jar$", "-sources.jar");
+
+			outputIntermediary = parent.resolve(intermediaryFileName).toAbsolutePath();
+			outputNamed = parent.resolve(namedFileName).toAbsolutePath();
+		} else if (args.length == 2 + offset) {
+			inputLiteMod = Paths.get(args[0 + offset]).toAbsolutePath();
+			outputIntermediary = Paths.get(args[1 + offset]).toAbsolutePath();
+			outputNamed = null;
+		} else {
 			System.err.println("usage:");
-			System.err.println("the mc jar must be in the classpath.");
-			System.err.println("java -cp minecraft.jar:litefabirc.jar de.skyrising.litefabric.remapper");
-			System.err.println("java -jar litefabric.jar <input liteloader mod> <tiny mapping> <output fabric mod base name>");
+			System.err.println("litefabric.jar _ malilib-liteloader-1.12.2-0.52.0.litemod");
+			System.err.println(" this will create two files called malilib-fabricloader-1.12.2-0.52.0.jar and malilib-fabricloader-1.12.2-0.52.0-sources.jar");
+			System.err.println("litefabric.jar _ voxelmap-1.7.1.litemod voxelmap-1.7.1.jar");
+			System.err.println(" this will create a file called voxelmap-1.7.1.jar only containing the intermediary version");
+			System.out.println(Arrays.toString(args));
 			return;
 		}
 
-		Path liteloaderMod = Paths.get(args[0]);
-		Path tinyMappings = Paths.get(args[1]);
-		Path fabricModIntermediary = Paths.get(args[2]);
-		Path fabricModNamed = Paths.get(args[2].replaceFirst(".jar", "-named.jar"));
-
-
-		if (!Files.exists(tinyMappings)) {
-			System.err.printf("TinyMappings File '%s' doesn't exits. Exiting.%n", tinyMappings);
-			return;
-		}
-
-		if (Files.exists(fabricModIntermediary)) {//TODO: maybe add flag to overwrite the file
-			System.err.printf("FabricMod File '%s' exist. Exiting.%n", fabricModIntermediary);
-			try {
-				Files.delete(fabricModIntermediary);
-			} catch (IOException e) {
-				throw new RuntimeException(e);
-			}
-			//return;
-		}
-
-		if (Files.exists(fabricModNamed)) {//TODO: maybe add flag to overwrite the file
-			System.err.printf("FabricMod File '%s' exist. Exiting.%n", fabricModNamed);
-			try {
-				Files.delete(fabricModNamed);
-			} catch (IOException e) {
-				throw new RuntimeException(e);
-			}
-			//return;
-		}
-
-		LiteMod mod = LiteMod.load(liteloaderMod);
-
-		TinyTree tree = getMappings(tinyMappings);
-
-		LitemodRemapper remapperIntermediary = new LitemodRemapper(tree, "intermediary");
-		LitemodRemapper remapperNamed = new LitemodRemapper(tree, "named");
-			/*(cls) -> {
-				//System.out.println(cls);
-				String classFileName = cls + ".class";
-				Path classFilePath = mod.jarFileSystemDelegate.get().getPath(classFileName);
+		{ // handle already existing output files
+			boolean intermediaryExits = Files.exists(outputIntermediary);
+			boolean namedExits = outputNamed != null && Files.exists(outputNamed);
+			if (intermediaryExits || namedExits) {
+				// for now delete the files
+				// TODO: maybe add flag to overwrite the file
 				try {
-					InputStream is = Files.newInputStream(classFilePath);
-					System.out.println("!= null " + cls);
-					return is;
-				} catch (NoSuchFileException ignored) {
-					System.out.println("== null " + cls);
-					return null;
+					Files.delete(outputIntermediary);
+					if (outputNamed != null)
+						Files.delete(outputNamed);
 				} catch (IOException e) {
 					throw new RuntimeException(e);
 				}
-			}*/
+			}
+		}
 
+		//TODO: somehow check if the mc jar is in cp
 
+		// make sure we can get the mappings from the classpath
+		TinyTree tree = getMappings();
 
-		mod.write(remapperIntermediary, fabricModIntermediary);
-		mod.write(remapperNamed, fabricModNamed);
-	}
+		// load the mod (the json files)
+		LiteMod mod = LiteMod.load(inputLiteMod);
 
-	static TinyTree getMappings(Path tinyMappings){
-		try {
-			BufferedReader reader = Files.newBufferedReader(tinyMappings);
-			return TinyMappingFactory.loadWithDetection(reader);
-		} catch (IOException e) {
-			throw new RuntimeException(e);
+		// create remappers
+		LitemodRemapper remapperIntermediary = new LitemodRemapper(tree, "intermediary");
+		LitemodRemapper remapperNamed = new LitemodRemapper(tree, "named");
+
+		// remap and write the mods
+		mod.write(remapperIntermediary, outputIntermediary);
+		if (outputNamed != null) {
+			mod.write(remapperNamed, outputNamed);
 		}
 	}
 
+	static TinyTree getMappings(){
+		try (InputStream inputStream = Main.class.getClassLoader().getResourceAsStream(TINY_MAPPINGS)) {
+			if (inputStream == null)
+				throw new IOException("inputStream is null");
 
+			BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
+			return TinyMappingFactory.loadWithDetection(reader);
+		} catch (IOException e) {
+			throw new RuntimeException("Cannot load " + TINY_MAPPINGS + " from classpath!", e);
+		}
+	}
 }
