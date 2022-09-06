@@ -7,6 +7,7 @@ import org.objectweb.asm.commons.Remapper;
 import org.objectweb.asm.tree.AnnotationNode;
 import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.FieldNode;
+import org.objectweb.asm.tree.MethodNode;
 import org.spongepowered.asm.mixin.extensibility.IRemapper;
 
 import java.io.IOException;
@@ -22,6 +23,7 @@ public class LitemodRemapper extends Remapper implements IRemapper {
     private final Map<String, Map<String, FieldDef>> fields = new HashMap<>();
     private final Map<String, Map<String, MethodDef>> methods = new HashMap<>();
     private final Map<String, Set<String>> shadowFields = new HashMap<>();
+    private final Map<String, Set<String>> shadowMethods = new HashMap<>();
     private final String targetNamespace;
     private final Map<String, String> mixinAnnotationSuperClasses = new HashMap<>();
     //private final Function<String, InputStream> classGetter;
@@ -57,30 +59,65 @@ public class LitemodRemapper extends Remapper implements IRemapper {
 
         // for every annotation on this class
         if (node.invisibleAnnotations != null) {
-            for (AnnotationNode classAnnotation : node.invisibleAnnotations) {
+            for (AnnotationNode classAnnotation: node.invisibleAnnotations) {
 
                 // if it's the Mixin annotation
                 if ("Lorg/spongepowered/asm/mixin/Mixin;".equals(classAnnotation.desc)) {
 
-                    Set<String> shadowFields = new HashSet<>();
+                    {
+                        Set<String> shadowFields = new HashSet<>();
 
-                    // collect all fields with the Shadow annotation
-                    for (FieldNode field : node.fields)
-                        if (field.visibleAnnotations != null)
-                            for (AnnotationNode fieldAnnotation : field.visibleAnnotations)
-                                if ("Lorg/spongepowered/asm/mixin/Shadow;".equals(fieldAnnotation.desc))
-                                    shadowFields.add(field.name);
+                        // collect all fields with the @Shadow annotation
+                        for (FieldNode field: node.fields)
+                            if (field.visibleAnnotations != null)
+                                for (AnnotationNode fieldAnnotation: field.visibleAnnotations)
+                                    if ("Lorg/spongepowered/asm/mixin/Shadow;".equals(fieldAnnotation.desc))
+                                        shadowFields.add(field.name);
 
-                    // and store then (based on the class)
-                    this.shadowFields.put(node.name, shadowFields);
+                        // and store then (based on the class)
+                        this.shadowFields.put(node.name, shadowFields);
+                    }
+                    {
+                        Set<String> shadowMethods = new HashSet<>();
 
-                    if (classAnnotation.values.size() == 2 && "value".equals(classAnnotation.values.get(0))) {
-                        Object valuesEntry = classAnnotation.values.get(1);
+                        // collect all methods with the @Shadow annotation
+                        for (MethodNode method: node.methods)
+                            if (method.visibleAnnotations != null)
+                                for (AnnotationNode methodAnnotation: method.visibleAnnotations)
+                                    if ("Lorg/spongepowered/asm/mixin/Shadow;".equals(methodAnnotation.desc))
+                                        shadowMethods.add(method.name);
 
-                        @SuppressWarnings("unchecked")
-                        Type superClass = ((List<Type>) valuesEntry).get(0);
+                        // and store them (based on the class)
+                        this.shadowMethods.put(node.name, shadowMethods);
+                    }
+                    
+                    if (classAnnotation.values.size() == 2) {
+                        // TODO: handle more than one field set
+                        String annotationFieldName = (String) classAnnotation.values.get(0);
 
-                        this.mixinAnnotationSuperClasses.put(node.name, superClass.getInternalName());
+                        if ("value".equals(annotationFieldName)) {
+                            // match the @Mixin(Class.class) case
+                            Object valuesEntry = classAnnotation.values.get(1);
+
+                            @SuppressWarnings("unchecked")
+                            Type superClass = ((List<Type>) valuesEntry).get(0);
+
+                            this.mixinAnnotationSuperClasses.put(node.name, superClass.getInternalName());
+                        } else if ("targets".equals(annotationFieldName)) {
+                            // match the @Mixin(targets = "org.example.class.Class$1") case
+                            @SuppressWarnings("unchecked")
+                            List<Object> targetsEntry = (List<Object>) classAnnotation.values.get(1);
+
+                            if (targetsEntry.size() != 1) {
+                                new RuntimeException("Unexpected multiple targets for class " + node.name + ": " + classAnnotation.values).printStackTrace();
+                            }
+
+                            for (Object target: targetsEntry) {
+                                String internalName = (String) target;
+
+                                this.mixinAnnotationSuperClasses.put(node.name, internalName);
+                            }
+                        }
                     } else {
                         throw new RuntimeException("Unknown annotation field for class " + node.name + ": " + classAnnotation.values);
                     }
@@ -131,9 +168,12 @@ public class LitemodRemapper extends Remapper implements IRemapper {
         //if (!knownClass && shadowFields.containsKey(owner)) {
         //    if (shadowFields.get(owner).contains(name)) return null;
         //}
+
+        // map @Shadow fields
         if (!knownClass && shadowFields.containsKey(owner)) {
             return mapFieldName0(mixinAnnotationSuperClasses.get(owner), name, descriptor);
         }
+
         if (knownClass) {
             Map<String, FieldDef> fieldMap = fields.computeIfAbsent(owner, this::computeFields);
             if (fieldMap != null) {
@@ -178,6 +218,13 @@ public class LitemodRemapper extends Remapper implements IRemapper {
             owner = unmap(owner);
             descriptor = unmapDesc(descriptor);
         }
+
+        // map @Shadow methods
+        //if (!knownClass && shadowMethods.containsKey(owner)) {
+        //    return mapMethodName0(mixinAnnotationSuperClasses.get(owner), name, descriptor);
+        //}
+        // TODO: fix shadow methods!!!
+
         if (knownClass) {
             Map<String, MethodDef> methodMap = methods.computeIfAbsent(owner, this::computeMethods);
             if (methodMap != null) {
