@@ -1,11 +1,15 @@
 package de.skyrising.litefabric.common;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
 public class EntryPointCollector {
+	private static final Logger LOGGER = LogManager.getLogger("LiteFabric|EntryPointCollector");
 	private final static Map<String, Map<String, Set<String>>> entryPoints = new HashMap<>();
 	private static boolean finished = false;
 	public static void addEntryPoint(String mod, String type, String clazz) {
@@ -22,6 +26,8 @@ public class EntryPointCollector {
 		map.put(type, set);
 
 		entryPoints.put(mod, map);
+
+		LOGGER.debug("Added LiteFabric EntryPoint: modId: " + mod + ", type: " + type + ", class: " + clazz);
 	}
 
 	public static boolean isFinished() {

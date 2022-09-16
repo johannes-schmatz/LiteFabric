@@ -134,6 +134,7 @@ public class Buildscript extends SimpleFabricProject {
 				r.add("-Dlog4j.configurationFile=" + writeLog4jXml());
 				r.add("-Dlog4j2.formatMsgNoLookups=true");
 				r.add("-Dfabric.log.disableAnsi=false");
+				r.add("-Djava.awt.headless=true"); // that way fabric loader doesn't open the pop up screen
 				//r.add("-Dfabric.debug.logClassLoad=true"); // without this it's the original
 				if (client) {
 					String natives = context.extractedNatives.get().stream().map(Path::toString).collect(Collectors.joining(File.pathSeparator));
@@ -159,6 +160,7 @@ public class Buildscript extends SimpleFabricProject {
 					r.add(dependency.jar);
 				}
 				r.add(mappingsClasspath);
+				r.add(cwd.resolve("mods/malilib.jar"));
 				return r;
 			});
 			return new IdeModule.IdeModuleBuilder()
