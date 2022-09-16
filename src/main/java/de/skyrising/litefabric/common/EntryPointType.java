@@ -14,6 +14,8 @@ public class EntryPointType {
 	 * {@link fi.dy.masa.malilib.gui.config.liteloader.RedirectingConfigPanel}, if you extract the
 	 * {@link fi.dy.masa.malilib.gui.config.liteloader.RedirectingConfigPanel#configScreenFactory} from it,
 	 * you can run that to open the screen for you.
+	 *
+	 * masa added a getter in recent versions
 	 */
 	public static final String MALILIB_REDIRECTING_CONFIG_PANEL = "MALILIB_REDIRECTING_CONFIG_PANEL";
 

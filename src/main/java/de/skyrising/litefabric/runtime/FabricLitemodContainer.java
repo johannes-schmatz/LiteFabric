@@ -1,6 +1,7 @@
 package de.skyrising.litefabric.runtime;
 
 import de.skyrising.litefabric.common.EntryPointType;
+import de.skyrising.litefabric.liteloader.Configurable;
 import de.skyrising.litefabric.liteloader.LiteMod;
 import de.skyrising.litefabric.liteloader.modconfig.ConfigPanel;
 import net.fabricmc.loader.impl.launch.FabricLauncherBase;
@@ -8,6 +9,8 @@ import net.minecraft.client.gui.screen.Screen;
 
 import java.io.*;
 import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.*;
 import java.util.function.Supplier;
 
@@ -53,15 +56,26 @@ public class FabricLitemodContainer {
 	}
 
 	public Screen getConfigScreen(Screen parent) {
+		// TODO: voxelmap: this.instance instanceof Configurable, then cast, then get the panel class...
+
 		Set<String> configPanelClasses = this.entryPoints.get(EntryPointType.MALILIB_REDIRECTING_CONFIG_PANEL);
 
 		if (configPanelClasses == null)
 			return null;
 
+		if (configPanelClasses.size() != 1)
+			throw new RuntimeException(configPanelClasses.toString());
+
 		for (String className: configPanelClasses) {
 			try {
 				Class<?> cls = FabricLitemodContainer.class.getClassLoader().loadClass(className.replace('/', '.'));
 				ConfigPanel panel = (ConfigPanel) cls.newInstance();
+				Method getConfigScreenFactory = cls.getMethod("getConfigScreenFactory");
+
+				@SuppressWarnings("unchecked")
+				Supplier<Screen> configScreenFactory = (Supplier<Screen>) getConfigScreenFactory.invoke(panel);
+
+/*				return configScreenFactory.get();
 
 				Class<?> superCls = cls.getSuperclass();
 				Field configScreenFactoryField = superCls.getField("configScreenFactory");
@@ -71,12 +85,11 @@ public class FabricLitemodContainer {
 				Supplier<? extends Screen> configScreenFactory = (Supplier<? extends Screen>) configScreenFactoryField.get(panel);
 
 				return configScreenFactory.get();
-
+*/
 				// use a custom Screen class that just opens the malilib screen when initialized
 				//return new ModConfigHelperScreen(panel);
-			} catch (ClassNotFoundException | IllegalAccessException | InstantiationException e) {
-				throw new RuntimeException(e);
-			} catch (NoSuchFieldException e) {
+			} catch (ClassNotFoundException | IllegalAccessException | InstantiationException |
+					 NoSuchMethodException | InvocationTargetException e) {
 				throw new RuntimeException(e);
 			}
 		}
