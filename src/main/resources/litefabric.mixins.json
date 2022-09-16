@@ -1,19 +1,20 @@
 {
-  "required": true,
-  "package": "de.skyrising.litefabric.mixin",
-  "compatibilityLevel": "JAVA_8",
-  "mixins": [
-    "MinecraftServerMixin"
-  ],
-  "client": [
-    "ButtonWidgetAccessor",
-    "ChatMessageS2CPacketAccessor",
-    "ClientLoginNetworkHandlerMixin",
-    "ClientPlayerEntityMixin",
-    "ClientPlayNetworkHandlerMixin",
-    "GameRendererMixin",
-    "KeyBindingAccessor",
-    "MinecraftClientAccessor",
-    "MinecraftClientMixin"
-  ]
+	"required": true,
+	"package": "de.skyrising.litefabric.mixin",
+	"compatibilityLevel": "JAVA_8",
+	"mixins": [
+		"MinecraftServerMixin"
+	],
+	"client": [
+		"ButtonWidgetAccessor",
+		"ChatMessageS2CPacketAccessor",
+		"ClientLoginNetworkHandlerMixin",
+		"ClientPlayerEntityMixin",
+		"ClientPlayNetworkHandlerMixin",
+		"GameRendererMixin",
+		"KeyBindingAccessor",
+		"MinecraftClientAccessor",
+		"MinecraftClientMixin",
+		"ModRemappingCallbackMixin"
+	]
 }

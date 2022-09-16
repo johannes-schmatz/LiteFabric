@@ -1,5 +1,8 @@
 package de.skyrising.litefabric.common;
 
+import java.nio.file.Path;
+import java.nio.file.Paths;
+
 public class EntryPointType {
 	/**
 	 * A {@link EntryPointType} that indicates that it's class is a LiteMod entry point. (this also indicates that there's a mod)
@@ -24,5 +27,24 @@ public class EntryPointType {
 	public static String getCollectorClassName() {
 		//TODO: also change this when refactoring EntryPointCollector (moving it) [fix package]
 		return "de/skyrising/litefabric/common/EntryPointCollector";
+	}
+
+	/**
+	 * returns the fabric mod file name of the litemod
+	 * @param liteModFileName the original liteloader mod file
+	 * @return the fabric loader mod file
+	 */
+	public static String getFabricModName(String liteModFileName) {
+		// replace liteloader in filename with fabricloader, litemod with jar
+		return liteModFileName.replaceAll("liteloader", "fabricloader").replaceAll("\\.litemod$", ".jar");
+	}
+
+	public static Path getFabricMod(Path liteMod) {
+		Path parent = liteMod.toAbsolutePath().getParent();
+
+		String liteModFileName = liteMod.getFileName().toString();
+		String fabricModFileName = getFabricModName(liteModFileName);
+
+		return parent.resolve(fabricModFileName).toAbsolutePath();
 	}
 }
