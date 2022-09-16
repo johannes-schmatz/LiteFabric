@@ -14,4 +14,9 @@ public class ModMenuCompat implements ModMenuApi {
         }
         return factories;
     }
+
+    static {
+        // TODO: add registering mod menu badge, once the ported version of modmenu from Legacy ender is used
+        //  see https://discord.com/channels/679635419045822474/915114155298676807/1018279263033626685
+    }
 }

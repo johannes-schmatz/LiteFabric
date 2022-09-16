@@ -66,6 +66,7 @@ public class FabricLitemodContainer {
 				Class<?> superCls = cls.getSuperclass();
 				Field configScreenFactoryField = superCls.getField("configScreenFactory");
 
+				//TODO: this stuff doesn't work in the dev env?
 				@SuppressWarnings("unchecked")
 				Supplier<? extends Screen> configScreenFactory = (Supplier<? extends Screen>) configScreenFactoryField.get(panel);
 
