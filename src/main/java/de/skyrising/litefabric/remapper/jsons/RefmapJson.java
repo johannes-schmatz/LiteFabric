@@ -58,8 +58,14 @@ public class RefmapJson {
 	public void remap(LitemodRemapper remapper) {
 		this.data.clear();
 
+		// TODO: let this also change the descriptor? maybe not
+		// for every class entry we need to remap the mappings of references
 		this.mappings.forEach((mixinClass, refmapEntryMap) -> {
-			refmapEntryMap.replaceAll((c, v) -> remapper.mapRefMapEntry(mixinClass, refmapEntryMap.get(c)));
+			// TODO: don't let this write back here, we want to use the original here again!
+			//  also we should remap the map only once, not once for named and intermediary, but once for both
+			refmapEntryMap.replaceAll((originalName, oldMappedName) -> remapper.mapRefMapEntry(mixinClass, oldMappedName));
+			//refmapEntryMap.replaceAll((c, v) -> remapper.mapRefMapEntry(mixinClass, refmapEntryMap.get(c)));
+			// ^ this should be the same as the uncommented above
 		});
 
 		this.data.put("named:intermediary", this.mappings);

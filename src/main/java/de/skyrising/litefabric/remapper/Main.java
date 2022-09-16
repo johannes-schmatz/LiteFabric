@@ -13,6 +13,8 @@ import java.util.Arrays;
 
 public class Main {
 	private static final String TINY_MAPPINGS = "mappings/mappings.tiny";
+	// TODO: probably best to let this call some more abstract "main" function
+	//  also let that be called by a mixin in the minecraft's main at the top
 	public static void main(String[] args) {
 		Path inputLiteMod;
 		Path outputIntermediary;
@@ -48,20 +50,18 @@ public class Main {
 			return;
 		}
 
-		{ // handle already existing output files
-			boolean intermediaryExits = Files.exists(outputIntermediary);
-			boolean namedExits = outputNamed != null && Files.exists(outputNamed);
-			if (intermediaryExits || namedExits) {
-				// for now delete the files
-				// TODO: maybe add flag to overwrite the file
-				try {
-					Files.delete(outputIntermediary);
-					if (outputNamed != null)
-						Files.delete(outputNamed);
-				} catch (IOException e) {
-					throw new RuntimeException(e);
-				}
+		// handle already existing output files
+		// TODO: maybe add flag to overwrite the file
+		try {
+			// for now delete the files
+			if (Files.exists(outputIntermediary)) {
+				Files.delete(outputIntermediary);
 			}
+			if (outputNamed != null && Files.exists(outputNamed)) {
+				Files.delete(outputNamed);
+			}
+		} catch (IOException e) {
+			throw new RuntimeException(e);
 		}
 
 		//TODO: somehow check if the mc jar is in cp
@@ -79,11 +79,11 @@ public class Main {
 		// remap and write the mods
 		mod.write(remapperIntermediary, outputIntermediary);
 		if (outputNamed != null) {
-			mod.write(remapperNamed, outputNamed);
+			//mod.write(remapperNamed, outputNamed); //TODO: uncomment conde the RefMap remapping replacing itself is fixed
 		}
 	}
 
-	static TinyTree getMappings(){
+	public static TinyTree getMappings(){
 		try (InputStream inputStream = Main.class.getClassLoader().getResourceAsStream(TINY_MAPPINGS)) {
 			if (inputStream == null)
 				throw new IOException("inputStream is null");
