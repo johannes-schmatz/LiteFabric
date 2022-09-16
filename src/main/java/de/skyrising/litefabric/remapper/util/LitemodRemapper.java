@@ -9,13 +9,13 @@ import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.FieldNode;
 import org.objectweb.asm.tree.MethodNode;
 import org.spongepowered.asm.mixin.extensibility.IRemapper;
+import org.spongepowered.asm.mixin.injection.struct.MemberInfo;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.*;
 
 public class LitemodRemapper extends Remapper implements IRemapper {
-    private static final String LITELOADER_PACKAGE = "com/mumfrey/liteloader/";
     private static final String SOURCE_NAMESPACE = "official";
     private final Map<String, ClassDef> classes = new HashMap<>();
     private final Map<String, String> classesReverse = new HashMap<>();
@@ -44,7 +44,41 @@ public class LitemodRemapper extends Remapper implements IRemapper {
         //this.classGetter = classGetter;
     }
 
+    /*
+
+    Caused by: org.spongepowered.asm.mixin.injection.throwables.InjectionError: Critical injection failure: Callback method
+    onRunTick(Lorg/spongepowered/asm/mixin/injection/callback/CallbackInfo;)V in mixins.tweakeroo.json:MixinMinecraft from
+    mod tweakeroo failed injection check, (0/1) succeeded. Scanned 1 target(s). Using refmap mixins.tweakeroo.refmap.json
+
+    @Inject(method = {"runTick"}, slice = {
+    @Slice(from = @At(value = "INVOKE", target = "Lnet/minecraft/client/Minecraft;runTickKeyboard()V"))
+    },
+    at = {@At(value = "FIELD", target = "Lnet/minecraft/client/Minecraft;world:Lnet/minecraft/client/multiplayer/WorldClient;", ordinal = 0)})
+  private void onRunTick(CallbackInfo ci) {
+    MiscTweaks.onTick((class_1600)this);
+  }
+
+
+
+Caused by: java.lang.NoSuchMethodError: fi.dy.masa.malilib.command.ClientCommandHandler.a(Lnet/minecraft/class_1061;Ljava/lang/String;)I
+	at net.minecraft.class_388.handler$zzg000$onSendMessage(class_388.java:591) ~[client-intermediary.jar:?]
+	at net.minecraft.class_388.method_9583(class_388.java:327) ~[client-intermediary.jar:?]
+
+
+public class ClientCommandHandler extends CommandHandler
+	@Override
+    public int func_71556_a(ICommandSender sender, String message)
+
+
+public class ClientCommandHandler extends bj
+    public int a(bn sender, String message)
+
+	//TODO it doesn't remap methods overwriting methods from super classes correctly (it remaps the method, but not references to it)
+     */
+
+    // this method gets called on each class **before** any remapping is done
     public Set<String> addClass(ClassNode node) {
+        // TODO: check that this is correct for @Mixin classes
         LinkedHashSet<String> superClasses = new LinkedHashSet<>();
         String superName = node.superName;
 
@@ -60,76 +94,74 @@ public class LitemodRemapper extends Remapper implements IRemapper {
         // for every annotation on this class
         if (node.invisibleAnnotations != null) {
             for (AnnotationNode classAnnotation: node.invisibleAnnotations) {
+                // if it's not the Mixin annotation, continue searching
+                if (!"Lorg/spongepowered/asm/mixin/Mixin;".equals(classAnnotation.desc))
+                    continue;
 
-                // if it's the Mixin annotation
-                if ("Lorg/spongepowered/asm/mixin/Mixin;".equals(classAnnotation.desc)) {
+                // store all fields with the @Shadow annotation in this.shadowFields
+                {
+                    Set<String> shadowFields = new HashSet<>();
+                    for (FieldNode field: node.fields)
+                        if (field.visibleAnnotations != null)
+                            for (AnnotationNode fieldAnnotation: field.visibleAnnotations)
+                                if ("Lorg/spongepowered/asm/mixin/Shadow;".equals(fieldAnnotation.desc))
+                                    shadowFields.add(field.name);
 
-                    {
-                        Set<String> shadowFields = new HashSet<>();
-
-                        // collect all fields with the @Shadow annotation
-                        for (FieldNode field: node.fields)
-                            if (field.visibleAnnotations != null)
-                                for (AnnotationNode fieldAnnotation: field.visibleAnnotations)
-                                    if ("Lorg/spongepowered/asm/mixin/Shadow;".equals(fieldAnnotation.desc))
-                                        shadowFields.add(field.name);
-
-                        // and store then (based on the class)
-                        this.shadowFields.put(node.name, shadowFields);
-                    }
-                    {
-                        Set<String> shadowMethods = new HashSet<>();
-
-                        // collect all methods with the @Shadow annotation
-                        for (MethodNode method: node.methods)
-                            if (method.visibleAnnotations != null)
-                                for (AnnotationNode methodAnnotation: method.visibleAnnotations)
-                                    if ("Lorg/spongepowered/asm/mixin/Shadow;".equals(methodAnnotation.desc))
-                                        shadowMethods.add(method.name);
-
-                        // and store them (based on the class)
-                        this.shadowMethods.put(node.name, shadowMethods);
-                    }
-                    
-                    if (classAnnotation.values.size() == 2) {
-                        // TODO: handle more than one field set
-                        String annotationFieldName = (String) classAnnotation.values.get(0);
-
-                        if ("value".equals(annotationFieldName)) {
-                            // match the @Mixin(Class.class) case
-                            Object valuesEntry = classAnnotation.values.get(1);
-
-                            @SuppressWarnings("unchecked")
-                            Type superClass = ((List<Type>) valuesEntry).get(0);
-
-                            this.mixinAnnotationSuperClasses.put(node.name, superClass.getInternalName());
-                        } else if ("targets".equals(annotationFieldName)) {
-                            // match the @Mixin(targets = "org.example.class.Class$1") case
-                            @SuppressWarnings("unchecked")
-                            List<Object> targetsEntry = (List<Object>) classAnnotation.values.get(1);
-
-                            if (targetsEntry.size() != 1) {
-                                new RuntimeException("Unexpected multiple targets for class " + node.name + ": " + classAnnotation.values).printStackTrace();
-                            }
-
-                            for (Object target: targetsEntry) {
-                                String internalName = (String) target;
-
-                                this.mixinAnnotationSuperClasses.put(node.name, internalName);
-                            }
-                        }
-                    } else {
-                        throw new RuntimeException("Unknown annotation field for class " + node.name + ": " + classAnnotation.values);
-                    }
-
-                    break;
+                    // and store then (based on the class)
+                    this.shadowFields.put(node.name, shadowFields);
                 }
+
+                // store all methods with the @Shadow annotation in this.shadowMethods
+                {
+                    Set<String> shadowMethods = new HashSet<>();
+                    for (MethodNode method: node.methods)
+                        if (method.visibleAnnotations != null)
+                            for (AnnotationNode methodAnnotation: method.visibleAnnotations)
+                                if ("Lorg/spongepowered/asm/mixin/Shadow;".equals(methodAnnotation.desc))
+                                    shadowMethods.add(method.name);
+
+                    // and store them (based on the class)
+                    this.shadowMethods.put(node.name, shadowMethods);
+                }
+
+                List<String> targets = new ArrayList<>(1); // most mixins have one target
+
+                int len = classAnnotation.values.size();
+                for (int i = 0; i < len; i += 2) { // iterate over all annotations
+                    String annotationFieldName = (String) classAnnotation.values.get(i);
+                    Object annotationFieldValue = classAnnotation.values.get(i + 1);
+
+                    if ("value".equals(annotationFieldName)) {
+                        // match the @Mixin(Class.class) case
+                        @SuppressWarnings("unchecked")
+                        List<Type> annotationValue = (List<Type>) annotationFieldValue;
+                        for (Type superClass: annotationValue) {
+                            targets.add(superClass.getInternalName());
+                        }
+                    }
+                    // it's valid to use both ways of specifying targets at the same time
+                    if ("targets".equals(annotationFieldName)) {
+                        // match the @Mixin(targets = "org/example/class/Class$1") case
+                        @SuppressWarnings("unchecked")
+                        List<String> annotationValue = (List<String>) annotationFieldValue;
+                        targets.addAll(annotationValue);
+                    }
+                }
+                if (targets.size() == 0) {
+                    throw new RuntimeException("Didn't find any targets in class " + node.name + ": " + classAnnotation.values);
+                }
+
+                // TODO: refactor it to use lists/sets here, shouldn't matter, it could be that there are mixins that specify
+                //  two classes, but have methods that are not in the first one/second one
+                this.mixinAnnotationSuperClasses.put(node.name, targets.get(0));
             }
         }
 
-        return addSuperClassMapping(node.name, superClasses);
+        this.superClasses.put(node.name, superClasses);
+        return superClasses;
     }
 
+    private static final String LITELOADER_PACKAGE = "com/mumfrey/liteloader/";
     @Override
     public String map(String internalName) {
         if (internalName.startsWith(LITELOADER_PACKAGE)) {
@@ -137,7 +169,9 @@ public class LitemodRemapper extends Remapper implements IRemapper {
         }
 
         ClassDef def = classes.get(internalName);
-        if (def != null) return def.getName(targetNamespace);
+        if (def != null) {
+            return def.getName(targetNamespace);
+        }
         return internalName;
     }
 
@@ -220,9 +254,9 @@ public class LitemodRemapper extends Remapper implements IRemapper {
         }
 
         // map @Shadow methods
-        //if (!knownClass && shadowMethods.containsKey(owner)) {
-        //    return mapMethodName0(mixinAnnotationSuperClasses.get(owner), name, descriptor);
-        //}
+        if (!knownClass && shadowMethods.containsKey(owner)) {
+            return mapMethodName0(mixinAnnotationSuperClasses.get(owner), name, descriptor);
+        }
         // TODO: fix shadow methods!!!
 
         if (knownClass) {
@@ -242,8 +276,11 @@ public class LitemodRemapper extends Remapper implements IRemapper {
     private String mapMethodNameFromSupers(String owner, String name, String descriptor) {
         Set<String> superClassNames = getSuperClasses(owner);
         for (String superClass : superClassNames) {
+            // for every super class we try to map the method in it, if it's successful return that mapping
             String superMap = mapMethodName0(superClass, name, descriptor);
-            if (superMap != null) return superMap;
+            if (superMap != null) {
+                return superMap;
+            }
         }
         return null;
     }
@@ -260,8 +297,8 @@ public class LitemodRemapper extends Remapper implements IRemapper {
             return Collections.emptySet();
         if (superClasses.containsKey(cls))
             return superClasses.get(cls);
-        if (mixinAnnotationSuperClasses.containsKey(cls))
-            return Collections.singleton(mixinAnnotationSuperClasses.get(cls));
+        //if (mixinAnnotationSuperClasses.containsKey(cls))
+        //    return Collections.singleton(mixinAnnotationSuperClasses.get(cls));
 
         // get the non mapped class
         //InputStream in = FabricLauncherBase.getLauncher().getResourceAsStream(map(cls) + ".class");
@@ -279,7 +316,7 @@ public class LitemodRemapper extends Remapper implements IRemapper {
         }
 
         InputStream in = LitemodRemapper.class.getClassLoader().getResourceAsStream(clsMappedNamed + ".class");
-        //TODO: load from the specified jar, then from the class loader?
+        //T_ODO: load from the specified jar, then from the class loader?
 
         //if (in == null)
         //    in = classGetter.apply(map(cls));
@@ -300,7 +337,7 @@ public class LitemodRemapper extends Remapper implements IRemapper {
             ClassNode node = new ClassNode();
             reader.accept(node, ClassReader.SKIP_CODE | ClassReader.SKIP_FRAMES);
 
-            Set<String> supers = addClass(node);
+            Set<String> supers = addClass(node); // TODO: here we store the named classes under non named! bug!
             return addSuperClassMapping(cls, supers); //pretty hacky, adds stuff twice, with different keys, shouldn't matter
         } catch (IOException e) {
             e.printStackTrace();
@@ -365,48 +402,148 @@ public class LitemodRemapper extends Remapper implements IRemapper {
         return builder.toString();
     }
 
+    /**
+     * We need to unmap the refmap content, generated by {@link MemberInfo#toString()}:
+     *
+     * <pre>{@code
+     * public String toString() {
+     *     String owner = this.owner != null ? "L" + this.owner + ";" : "";
+     *     String name = this.name != null ? this.name : "";
+     *     String quantifier = this.matches.toString();
+     *     String desc = this.desc != null ? this.desc : "";
+     *     String separator = desc.startsWith("(") ? "" : (this.desc != null ? ":" : "");
+     *     String tail = this.tail != null ? " " + MemberInfo.ARROW + " " + this.tail : "";
+     *     return owner + name + quantifier + separator + desc + tail;
+     * }
+     * }</pre>
+     *
+     * @param mixinClass The internal name of the @Mixin annotated class
+     * @param old The old refmap target entry.
+     * @return The new refmap target entry.
+     */
     public String mapRefMapEntry(String mixinClass, String old) {
-        String superClass = mixinAnnotationSuperClasses.get(mixinClass);
-        if (superClass != null) {
-            int separator = old.indexOf(':');
-            if (separator == -1) {
-                // remap the refmap method
-                if (old.startsWith("L")) {
-                    // method from other class
-                    int otherClassEnd = old.indexOf(";");
-                    int descStart = old.indexOf("(");
-                    String otherClass = old.substring(1, otherClassEnd);
-                    String methodName = old.substring(otherClassEnd + 1, descStart);
-                    String descriptor = old.substring(descStart);
+        // format is:
+        // owner + name + quantifier + (desc == null || desc.startsWith("(") ? "" : ":") + desc + (tail != null ? " -> " : "") + tail
+        String owner; // can be ""
+        String name;
+        String quantifier; // can be ""
+        String desc; // can be ""
+        String tail; // can be ""
 
-                    // if this can't map a method (that isn't in the class, but in an interface for example)
-                    // make sure that that class can be loaded from the classpath.
-
-                    return "L" + map(otherClass) + ";" + mapMethodName(otherClass, methodName, descriptor) + mapDesc(descriptor);
+        // read the entry
+        {
+            String rest;
+            // get tail
+            {
+                String arrow = " -> ";
+                int arrowPosition = old.indexOf(arrow);
+                if (arrowPosition == -1) { // tail == null
+                    tail = "";
+                    rest = old;
                 } else {
-                    // method from super class
-                    int descStart = old.indexOf("(");
-                    String methodName = old.substring(0, descStart);
-                    String descriptor = old.substring(descStart);
-
-                    return mapMethodName(superClass, methodName, descriptor) + mapDesc(descriptor);
+                    rest = old.substring(0, arrowPosition);
+                    tail = old.substring(arrowPosition + arrow.length());
                 }
-            } else {
-                // remap the refmap field
-                String fieldName = old.substring(0, separator);
-                String fieldDescriptor = old.substring(separator + 1);
-                if (fieldName.startsWith("L")) {
-                    // an @Inject annotation with value="FIELD"
-                    int otherClassEnd = fieldName.indexOf(";");
-                    String otherClass = fieldName.substring(1, otherClassEnd);
-                    String otherClassFieldName = fieldName.substring(otherClassEnd + 1);
-                    return "L" + map(otherClass) + ";" + mapFieldName(otherClass, otherClassFieldName, fieldDescriptor) + ":" + mapDesc(fieldDescriptor);
+            }
+
+            // get desc
+            {
+                int separatorPosition = rest.indexOf(":");
+                if (separatorPosition == -1) { // separator == null
+                    int parenthesisPosition = rest.indexOf("(");
+                    if (parenthesisPosition == -1) {
+                        desc = "";
+                    } else {
+                        // if there's no ':', then there must be a '(' or **the desc is null**
+                        desc = rest.substring(parenthesisPosition);
+                        rest = rest.substring(0, parenthesisPosition);
+                    }
                 } else {
-                    // just a normal field
-                    return mapFieldName(superClass, fieldName, fieldDescriptor) + ":" + mapDesc(fieldDescriptor);
+                    desc = rest.substring(separatorPosition + 1);
+                    rest = rest.substring(0, separatorPosition);
+                }
+            }
+
+            // get owner
+            {
+                if (rest.startsWith("L")) { // owner != null
+                    int endPosition = rest.indexOf(";");
+                    if (endPosition == -1) {
+                        throw new RuntimeException(
+                                "Cannot parse refmap entry of class " + mixinClass + ": it starts with 'L', and doesn't contain a ';': " + old);
+                    } else {
+                        owner = rest.substring(1, endPosition);
+                        rest = rest.substring(endPosition + 1); // we don't want the ';' here
+                    }
+                } else {
+                    owner = "";
+                }
+            }
+
+            // get quantifier
+            {
+                // try to find either '{', '+' or '*'
+                int bracesPosition = rest.indexOf("{");
+                if (bracesPosition == -1)
+                    bracesPosition = rest.indexOf("*");
+                if (bracesPosition == -1)
+                    bracesPosition = rest.indexOf("+");
+
+                if (bracesPosition == -1) {
+                    // try the * and +
+                    quantifier = "";
+                } else {
+                    quantifier = rest.substring(bracesPosition);
+                    rest = rest.substring(0, bracesPosition);
+                }
+            }
+
+            // get name
+            {
+                name = rest; // only name is left
+                if (name.isEmpty()) {
+                    throw new RuntimeException("Cannot parse refmap entry of class " + mixinClass +
+                            ": the name is \"\", so something went wrong: owner = \"" + owner + "\", name = \"" + name +
+                            "\", quantifier = \"" + quantifier + "\", desc = \"" + desc + "\", tail = \"" + tail +
+                            "\", old = \"" + old + "\"");
                 }
             }
         }
-        throw new RuntimeException("Can't find (super) class in mixin annotation in class " + mixinClass);
+
+        // for now just stop here, most stuff doesn't use quantifiers or tails
+        if (!quantifier.isEmpty())
+            throw new RuntimeException("Quantifiers are not yet supported: " + old);
+        if (!tail.isEmpty())
+            throw new RuntimeException("Tails are not yet supported: " + tail);
+
+        // do the actual mapping
+
+        // it's a class
+        if (owner.isEmpty() && desc.isEmpty()) {
+            return map(name);
+        }
+
+        // it's a method
+        if (desc.startsWith("(") && desc.contains(")")) {
+            if (owner.isEmpty()) { // it's an @Invoker
+                String mixinOwner = mixinAnnotationSuperClasses.get(mixinClass);
+                if (mixinOwner == null)
+                    throw new RuntimeException("Can't find target class for mixin " + mixinClass);
+                return mapMethodName(mixinOwner, name, desc) + mapDesc(desc);
+            } else { // just a normal method
+                return "L" + map(owner) + ";" + mapMethodName(owner, name, desc) + mapDesc(desc);
+            }
+        }
+
+        // it's an @Accessor
+        if (owner.isEmpty()) {
+            String mixinOwner = mixinAnnotationSuperClasses.get(mixinClass);
+            if (mixinOwner == null)
+                throw new RuntimeException("Can't find target class for mixin " + mixinClass);
+            return mapFieldName(mixinOwner, name, desc) + ":" + desc;
+        }
+
+        // just a normal field
+        return "L" + map(owner) + ";" + mapFieldName(owner, name, desc) + ":" + desc;
     }
 }
