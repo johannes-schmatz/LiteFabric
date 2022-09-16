@@ -17,6 +17,7 @@ import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
+import java.util.stream.Collectors;
 import java.util.zip.ZipError;
 
 public class LiteMod {
@@ -111,35 +112,56 @@ public class LiteMod {
 		}
 	}
 
+	static class ClassStorage {
+		public String className;
+		public String classNameInternal;
+		public byte[] inputBytes;//rename? rawBytes?
+		public byte[] outputBytes;//rename?
+		public ClassNode inputNode;
+		public ClassNode outputNode;
+		public Path inputPath;
+		public Path outputPath;
+	}
+
 	private void writeRemappedClasses(LitemodRemapper remapper, FileSystem inputFileSystem, FileSystem outputFileSystem) throws IOException {
-		for (String name: classes) {
-			String key = name.replace('.', '/');
+		Set<ClassStorage> storages = new LinkedHashSet<>(classes.size());
 
-			String classFileName = key + ".class";
-			Path classFilePath = inputFileSystem.getPath(classFileName);
+		//TODO: improve this stuff here, clean up, only store needed values in ClassStorage
+		for (String className: classes) {
+			ClassStorage storage = new ClassStorage();
+			storage.className = className;
+			storage.classNameInternal = className.replace('.', '/') + ".class";
+			storage.inputPath = inputFileSystem.getPath(storage.classNameInternal);
+			storage.outputPath = outputFileSystem.getPath(storage.classNameInternal);
 
-			byte[] rawBytes;
-			try {
-				rawBytes = Files.readAllBytes(classFilePath);
+			try {//TODO: refactor, move to ClassStorage
+				storage.inputBytes = Files.readAllBytes(storage.inputPath);
 			} catch (IOException e) {
-				throw new RuntimeException("Can not read bytes of class " + name, e);
+				throw new RuntimeException("Can not read bytes of class " + className, e);
 			}
 
-			byte[] bytes = remapClass(rawBytes, remapper);
+			ClassReader reader = new ClassReader(storage.inputBytes);
+			ClassNode raw = new ClassNode();
+			reader.accept(raw, ClassReader.EXPAND_FRAMES);
 
-			Path outputClassPath = outputFileSystem.getPath(classFileName);
+			remapper.addClass(raw); //TODO: [done] first run this for all classes, then remap all classes
 
+			storage.inputNode = raw;
+
+			storages.add(storage);
+		}
+
+		for (ClassStorage storage: storages) {
+			storage.outputBytes = remapClass(storage.inputNode, remapper);
+		}
+
+		for (ClassStorage storage: storages) {
 			// creating folders isn't needed, those are copied with the other files stuff
-			Files.write(outputClassPath, bytes);
+			Files.write(storage.outputPath, storage.outputBytes);
 		}
 	}
 
-	private byte[] remapClass(byte[] rawBytes, LitemodRemapper remapper) {
-		ClassReader reader = new ClassReader(rawBytes);
-		ClassNode raw = new ClassNode();
-		reader.accept(raw, ClassReader.EXPAND_FRAMES);
-
-		remapper.addClass(raw);
+	private byte[] remapClass(ClassNode raw, LitemodRemapper remapper) {
 		ClassNode remapped = new ClassNode();
 		ClassRemapper clsRemapper = new ClassRemapper(remapped, remapper);
 		raw.accept(clsRemapper);
@@ -166,6 +188,7 @@ public class LiteMod {
 			}
 		}*/
 
+		// also move this step to later??
 		ClassWriter writer = new ClassWriter(Opcodes.ASM9);
 		remapped.accept(writer);
 
