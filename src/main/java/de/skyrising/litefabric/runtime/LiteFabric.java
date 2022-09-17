@@ -47,9 +47,9 @@ public class LiteFabric {
 		for (String modId: mods.keySet()) {
 			Optional<ModContainer> container = FabricLoader.getInstance().getModContainer(modId);
 
-			container.ifPresent(modContainer -> {
-				resourcePacks.add(new ModResourcePack(modId, modContainer));
-			});
+			container.ifPresent(modContainer ->
+				resourcePacks.add(new ModResourcePack(modId, modContainer))
+			);
 		}
 	}
 

@@ -1,31 +1,21 @@
-import io.github.coolcrabs.brachyura.compiler.java.JavaCompilation;
 import io.github.coolcrabs.brachyura.compiler.java.JavaCompilationResult;
 import io.github.coolcrabs.brachyura.decompiler.BrachyuraDecompiler;
 import io.github.coolcrabs.brachyura.decompiler.fernflower.FernflowerDecompiler;
 import io.github.coolcrabs.brachyura.dependency.JavaJarDependency;
 import io.github.coolcrabs.brachyura.fabric.*;
 import io.github.coolcrabs.brachyura.fabric.FabricContext.ModDependencyCollector;
-import io.github.coolcrabs.brachyura.ide.CustomRunConfigBuilder;
-import io.github.coolcrabs.brachyura.ide.IdeModule;
 import io.github.coolcrabs.brachyura.maven.Maven;
 import io.github.coolcrabs.brachyura.maven.MavenId;
 import io.github.coolcrabs.brachyura.minecraft.Minecraft;
 import io.github.coolcrabs.brachyura.minecraft.VersionMeta;
-import io.github.coolcrabs.brachyura.processing.ProcessingId;
 import io.github.coolcrabs.brachyura.processing.sinks.AtomicZipProcessingSink;
-import io.github.coolcrabs.brachyura.processing.sinks.DirectoryProcessingSink;
 import io.github.coolcrabs.brachyura.processing.sources.DirectoryProcessingSource;
 import io.github.coolcrabs.brachyura.project.Task;
-import io.github.coolcrabs.brachyura.project.java.BuildModule;
-import io.github.coolcrabs.brachyura.util.*;
 import net.fabricmc.mappingio.tree.MappingTree;
 
 import javax.tools.StandardLocation;
-import java.io.*;
 import java.lang.reflect.Field;
-import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.function.Consumer;
@@ -114,7 +104,7 @@ public class Buildscript extends SimpleFabricProject {
 		@Override
 		public List<String> ideVmArgs(boolean client) {
 			List<String> args = super.ideVmArgs(client);
-			args.add("-Djava.awt.headless=true"); // that way fabric loader doesn't open the pop up screen
+			args.add("-Djava.awt.headless=true"); // that way fabric loader doesn't open the pop-up screen
 			return args;
 		}
 	}
@@ -165,7 +155,7 @@ public class Buildscript extends SimpleFabricProject {
 		try (
 			// create the output sinks
 			AtomicZipProcessingSink jarSink = new AtomicZipProcessingSink(outJar);
-			AtomicZipProcessingSink jarSourcesSink = new AtomicZipProcessingSink(outJarSources);
+			AtomicZipProcessingSink jarSourcesSink = new AtomicZipProcessingSink(outJarSources)
 		) {
 			// make sure all dependencies are loaded
 			context.get().modDependencies.get(); // Ugly hack

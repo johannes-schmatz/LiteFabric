@@ -1,6 +1,5 @@
 package de.skyrising.litefabric.remapper.util;
 
-import net.fabricmc.loader.launch.common.FabricLauncherBase;
 import net.fabricmc.mapping.tree.*;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.Type;

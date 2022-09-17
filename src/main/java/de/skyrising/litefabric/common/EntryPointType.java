@@ -1,7 +1,6 @@
 package de.skyrising.litefabric.common;
 
 import java.nio.file.Path;
-import java.nio.file.Paths;
 
 public class EntryPointType {
 	/**
@@ -17,6 +16,7 @@ public class EntryPointType {
 	 *
 	 * masa added a getter in recent versions
 	 */
+	@SuppressWarnings("JavadocReference")
 	public static final String MALILIB_REDIRECTING_CONFIG_PANEL = "MALILIB_REDIRECTING_CONFIG_PANEL";
 
 	public static String getGeneratedPackageName(String modId, char separator) {
@@ -26,6 +26,7 @@ public class EntryPointType {
 		return getGeneratedPackageName(modId.toLowerCase(), separator) + separator + "PreLaunch";
 	}
 
+	@SuppressWarnings("SameReturnValue")
 	public static String getCollectorClassName() {
 		//TODO: also change this when refactoring EntryPointCollector (moving it) [fix package]
 		return "de/skyrising/litefabric/common/EntryPointCollector";
