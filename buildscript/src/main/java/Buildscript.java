@@ -32,8 +32,10 @@ import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 public class Buildscript extends SimpleFabricProject {
-	private static final String MAIN_CLASS = "de.skyrising.litefabric.remapper.Main";
-	private static final String MANIFEST_CONTENT = "Manifest-Version: 1.0\r\nMain-Class: " + MAIN_CLASS + "\r\n";
+	@Override
+	public String getMavenGroup(){
+		return "litefabric";
+	}
 
 	@Override
 	protected FabricContext createContext() {
@@ -104,22 +106,6 @@ public class Buildscript extends SimpleFabricProject {
 		return new CustomFabricModule(context.get());
 	}
 
-	@Override
-	public void getRunConfigTasks(Consumer<Task> p) {
-		IdeModule[] ms = getIdeModules();
-		for (IdeModule m : ms) {
-			for (IdeModule.RunConfig rc : m.runConfigs) {
-				String tname = ms.length == 1 ? "run" + rc.name.replace(" ", "") : m.name.replace(" ",
-						"") + ":run" + rc.name.replace(" ", "");
-				if (rc.cwd.equals(NONE_PATH)) {
-					p.accept(Task.of(tname, (String[] args) -> runRunConfigArgs(m, rc, args)));
-				} else {
-					p.accept(Task.of(tname, () -> runRunConfig(m, rc)));
-				}
-			}
-		}
-	}
-
 	public class CustomFabricModule extends SimpleFabricModule {
 		public CustomFabricModule(FabricContext context) {
 			super(context);
@@ -127,151 +113,9 @@ public class Buildscript extends SimpleFabricProject {
 
 		@Override
 		public List<String> ideVmArgs(boolean client) {
-			try {
-				ArrayList<String> r = new ArrayList<>();
-				r.add("-Dfabric.development=true");
-				r.add("-Dfabric.remapClasspathFile=" + context.runtimeRemapClasspath.get());
-				r.add("-Dlog4j.configurationFile=" + writeLog4jXml());
-				r.add("-Dlog4j2.formatMsgNoLookups=true");
-				r.add("-Dfabric.log.disableAnsi=false");
-				r.add("-Djava.awt.headless=true"); // that way fabric loader doesn't open the pop up screen
-				//r.add("-Dfabric.debug.logClassLoad=true"); // without this it's the original
-				if (client) {
-					String natives = context.extractedNatives.get().stream().map(Path::toString).collect(Collectors.joining(File.pathSeparator));
-					r.add("-Djava.library.path=" + natives);
-					r.add("-Dtorg.lwjgl.librarypath=" + natives);
-					if (OsUtil.OS == OsUtil.Os.OSX) {
-						r.add("-XstartOnFirstThread");
-					}
-				}
-				return r;
-			} catch (Exception e) {
-				throw Util.sneak(e);
-			}
-		}
-
-		@Override
-		public IdeModule ideModule() {
-			Path cwd = PathUtil.resolveAndCreateDir(getModuleRoot(), "run");
-			Lazy<List<Path>> classpath = new Lazy<>(() -> {
-				Path mappingsClasspath = writeMappings4FabricStuff().getParent().getParent();
-				ArrayList<Path> r = new ArrayList<>(context.runtimeDependencies.get().size() + 1);
-				for (JavaJarDependency dependency : context.runtimeDependencies.get()) {
-					r.add(dependency.jar);
-				}
-				r.add(mappingsClasspath);
-				r.add(cwd.resolve("mods/malilib.jar"));
-				return r;
-			});
-			return new IdeModule.IdeModuleBuilder()
-					.name(getModuleName())
-					.root(getModuleRoot())
-					.javaVersion(getJavaVersion())
-					.dependencies(context.ideDependencies)
-					.sourcePaths(getSrcDirs())
-					.resourcePaths(getResourceDirs())
-					.dependencyModules(getModuleDependencies().stream().map(BuildModule::ideModule).collect(Collectors.toList()))
-					.runConfigs(
-							new IdeModule.RunConfigBuilder()
-									.name("Minecraft Client")
-									.cwd(cwd)
-									.mainClass("net.fabricmc.loader.launch.knot.KnotClient")
-									.classpath(classpath)
-									.resourcePaths(getResourceDirs())
-									.vmArgs(() -> this.ideVmArgs(true))
-									.args(() -> this.ideArgs(true)),
-							new IdeModule.RunConfigBuilder()
-									.name("Minecraft Server")
-									.cwd(cwd)
-									.mainClass("net.fabricmc.loader.launch.knot.KnotServer")
-									.classpath(classpath)
-									.resourcePaths(getResourceDirs())
-									.vmArgs(() -> this.ideVmArgs(false))
-									.args(() -> this.ideArgs(false)),
-							new IdeModule.RunConfigBuilder() // this is custom
-									.name("LiteMod Remapper")
-									.cwd(NONE_PATH) // hack, there's an if in the run path
-									.mainClass("de.skyrising.litefabric.remapper.Main")
-									.classpath(classpath)
-									.vmArgs(this::remapperVmArgs)
-					)
-					.build();
-		}
-
-		private List<String> remapperVmArgs(){
-			return new ArrayList<>();
-		}
-	}
-
-	private static final Path NONE_PATH = Paths.get("/").toAbsolutePath();
-
-	public void runRunConfigArgs(IdeModule ideProject, IdeModule.RunConfig rc, String[] args) {
-		try {
-			LinkedHashSet<IdeModule> toCompile = new LinkedHashSet<>();
-			Deque<IdeModule> a = new ArrayDeque<>();
-			a.add(ideProject);
-			a.addAll(rc.additionalModulesClasspath);
-			while (!a.isEmpty()) {
-				IdeModule m = a.pop();
-				if (!toCompile.contains(m)) {
-					a.addAll(m.dependencyModules);
-					toCompile.add(m);
-				}
-			}
-			HashMap<IdeModule, Path> mmap = new HashMap<>();
-			for (IdeModule m : toCompile) {
-				JavaCompilation compilation = new JavaCompilation();
-				compilation.addOption(JvmUtil.compileArgs(JvmUtil.CURRENT_JAVA_VERSION, m.javaVersion));
-				compilation.addOption("-proc:none");
-				for (JavaJarDependency dep : m.dependencies.get()) {
-					compilation.addClasspath(dep.jar);
-				}
-				for (IdeModule m0 : m.dependencyModules) {
-					compilation.addClasspath(Objects.requireNonNull(mmap.get(m0), "Bad module dep " + m0.name));
-				}
-				for (Path srcDir : m.sourcePaths) {
-					compilation.addSourceDir(srcDir);
-				}
-				Path outDir = Files.createTempDirectory("brachyurarun");
-				JavaCompilationResult result = compilation.compile();
-				Objects.requireNonNull(result);
-				result.getInputs(new DirectoryProcessingSink(outDir));
-				mmap.put(m, outDir);
-			}
-			ArrayList<String> command = new ArrayList<>();
-			command.add(JvmUtil.CURRENT_JAVA_EXECUTABLE);
-
-			command.addAll(rc.vmArgs.get());
-
-			command.add("-cp");
-
-			ArrayList<Path> cp = new ArrayList<>(rc.classpath.get());
-			cp.addAll(ideProject.resourcePaths);
-			cp.add(mmap.get(ideProject));
-			for (IdeModule m : rc.additionalModulesClasspath) {
-				cp.add(mmap.get(m));
-			}
-
-			StringBuilder cpStr = new StringBuilder();
-			for (Path p : cp) {
-				cpStr.append(p.toString());
-				cpStr.append(File.pathSeparator);
-			}
-			cpStr.setLength(cpStr.length() - 1);
-
-			command.add(cpStr.toString());
-
-			command.add(rc.mainClass);
-
-			command.addAll(Arrays.asList(args));
-
-			// run the command
-			new ProcessBuilder(command)
-					.inheritIO()
-					.start()
-					.waitFor();
-		} catch (Exception e) {
-			throw Util.sneak(e);
+			List<String> args = super.ideVmArgs(client);
+			args.add("-Djava.awt.headless=true"); // that way fabric loader doesn't open the pop up screen
+			return args;
 		}
 	}
 
@@ -319,9 +163,9 @@ public class Buildscript extends SimpleFabricProject {
 		Path outJarSources = getBuildLibsDir().resolve(getModId() + "-" + getVersion() + "-sources.jar");
 
 		try (
-				// create the output sinks
-				AtomicZipProcessingSink jarSink = new AtomicZipProcessingSink(outJar);
-				AtomicZipProcessingSink jarSourcesSink = new AtomicZipProcessingSink(outJarSources);
+			// create the output sinks
+			AtomicZipProcessingSink jarSink = new AtomicZipProcessingSink(outJar);
+			AtomicZipProcessingSink jarSourcesSink = new AtomicZipProcessingSink(outJarSources);
 		) {
 			// make sure all dependencies are loaded
 			context.get().modDependencies.get(); // Ugly hack
@@ -332,19 +176,15 @@ public class Buildscript extends SimpleFabricProject {
 			// collect the output jar
 			context.get().getRemappedClasses(module.get()).values().forEach(s -> s.getInputs(jarSink));
 
-			// add a manifest containing our main class
-			jarSink.sink(() -> new StringBufferInputStream(MANIFEST_CONTENT), new ProcessingId("META-INF/MANIFEST.MF", null));
-
 			// collect the sources
 			for (Path p : module.get().getSrcDirs()) {
 				new DirectoryProcessingSource(p).getInputs(jarSourcesSink);
 			}
 
-
 			FabricModule.FabricCompilationResult compilationResult = module.get().fabricCompilationResult.get();
 
 			try {
-				// TODO: write a helper for reflection field access, with class caching!
+				// TODO: with new brachyura version this should be easier
 				Class<FabricModule.FabricCompilationResult> clazz = FabricModule.FabricCompilationResult.class;
 				Field javaCompilationResult = clazz.getDeclaredField("javaCompilationResult");
 				javaCompilationResult.setAccessible(true);
@@ -362,35 +202,5 @@ public class Buildscript extends SimpleFabricProject {
 
 		// return an object containing the output paths
 		return new JavaJarDependency(outJar, outJarSources, getId());
-	}
-
-	@Override
-	public String getMavenGroup(){
-		return "litefabric";
-	}
-}
-
-class StringBufferInputStream extends InputStream {
-	private final String content;
-	private final int length;
-	private int position = 0;
-
-	public StringBufferInputStream(String content) {
-		this.content = content;
-		this.length = content.length();
-	}
-
-	@Override
-	public int read() throws IOException {
-		if (this.position < this.length) {
-			return this.content.charAt(this.position++);
-		} else {
-			return -1;
-		}
-	}
-
-	@Override
-	public int available() {
-		return this.length - this.position;
 	}
 }
