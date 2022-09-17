@@ -1,5 +1,6 @@
 package de.skyrising.litefabric.remapper.util;
 
+import net.fabricmc.loader.launch.common.FabricLauncherBase;
 import net.fabricmc.mapping.tree.*;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.Type;
@@ -26,22 +27,16 @@ public class LitemodRemapper extends Remapper implements IRemapper {
     private final Map<String, Set<String>> shadowMethods = new HashMap<>();
     private final String targetNamespace;
     private final Map<String, String> mixinAnnotationSuperClasses = new HashMap<>();
-    //private final Function<String, InputStream> classGetter;
 
-    public LitemodRemapper(TinyTree mappings, String targetNamespace/*, Function<String, InputStream> classGetter*/) {
+    public LitemodRemapper(TinyTree mappings, String targetNamespace) {
         this.targetNamespace = targetNamespace;
         for (ClassDef cls : mappings.getClasses()) {
             String clsName = cls.getName(SOURCE_NAMESPACE);
-            //String targetName = cls.getName(targetNamespace);
+            String targetName = cls.getName(targetNamespace);
 
             classes.put(clsName, cls);
-            //classesReverse.put(targetName, clsName);
-
-            // reason for doing this is using this as a hack fix for the addClass of a "named" name
-            classesReverse.put(cls.getName("named"), clsName);
-            classesReverse.put(cls.getName("intermediary"), clsName);
+            classesReverse.put(targetName, clsName);
         }
-        //this.classGetter = classGetter;
     }
 
     /*
@@ -60,20 +55,6 @@ public class LitemodRemapper extends Remapper implements IRemapper {
 
 
 
-Caused by: java.lang.NoSuchMethodError: fi.dy.masa.malilib.command.ClientCommandHandler.a(Lnet/minecraft/class_1061;Ljava/lang/String;)I
-	at net.minecraft.class_388.handler$zzg000$onSendMessage(class_388.java:591) ~[client-intermediary.jar:?]
-	at net.minecraft.class_388.method_9583(class_388.java:327) ~[client-intermediary.jar:?]
-
-
-public class ClientCommandHandler extends CommandHandler
-	@Override
-    public int func_71556_a(ICommandSender sender, String message)
-
-
-public class ClientCommandHandler extends bj
-    public int a(bn sender, String message)
-
-	//TODO it doesn't remap methods overwriting methods from super classes correctly (it remaps the method, but not references to it)
      */
 
     // this method gets called on each class **before** any remapping is done
@@ -257,7 +238,6 @@ public class ClientCommandHandler extends bj
         if (!knownClass && shadowMethods.containsKey(owner)) {
             return mapMethodName0(mixinAnnotationSuperClasses.get(owner), name, descriptor);
         }
-        // TODO: fix shadow methods!!!
 
         if (knownClass) {
             Map<String, MethodDef> methodMap = methods.computeIfAbsent(owner, this::computeMethods);
@@ -300,33 +280,7 @@ public class ClientCommandHandler extends bj
         //if (mixinAnnotationSuperClasses.containsKey(cls))
         //    return Collections.singleton(mixinAnnotationSuperClasses.get(cls));
 
-        // get the non mapped class
-        //InputStream in = FabricLauncherBase.getLauncher().getResourceAsStream(map(cls) + ".class");
-        // T_ODO: remove this somehow, load it from the jar instead
-
-        // T_ODO: this doesn't work in the dev env with intermediary mappings
-
-        // use "named" for getting the super classes, later remap the super classes again to the "official" names
-        String clsMappedNamed;
-        ClassDef def = classes.get(cls);
-        if (def != null) {
-            clsMappedNamed = def.getName("named");
-        } else {
-            clsMappedNamed = cls;
-        }
-
-        InputStream in = LitemodRemapper.class.getClassLoader().getResourceAsStream(clsMappedNamed + ".class");
-        //T_ODO: load from the specified jar, then from the class loader?
-
-        //if (in == null)
-        //    in = classGetter.apply(map(cls));
-
-        /*if (in == null) {
-            in = Main.class.getClassLoader().getResourceAsStream(map(cls) + ".class");
-            if (in != null) {
-                System.out.println("->      " + cls);
-            }
-        }*/
+        InputStream in = LitemodRemapper.class.getClassLoader().getResourceAsStream(map(cls) + ".class");
 
         if (in == null) {
             return addSuperClassMapping(cls, Collections.emptySet());
@@ -337,8 +291,7 @@ public class ClientCommandHandler extends bj
             ClassNode node = new ClassNode();
             reader.accept(node, ClassReader.SKIP_CODE | ClassReader.SKIP_FRAMES);
 
-            Set<String> supers = addClass(node); // TODO: here we store the named classes under non named! bug!
-            return addSuperClassMapping(cls, supers); //pretty hacky, adds stuff twice, with different keys, shouldn't matter
+            return addClass(node);
         } catch (IOException e) {
             e.printStackTrace();
         }
