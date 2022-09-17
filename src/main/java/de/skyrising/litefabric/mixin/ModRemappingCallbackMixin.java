@@ -5,13 +5,17 @@ import de.skyrising.litefabric.remapper.LiteMod;
 import de.skyrising.litefabric.remapper.Main;
 import de.skyrising.litefabric.remapper.util.LitemodRemapper;
 import net.fabricmc.loader.api.FabricLoader;
+import net.fabricmc.mapping.tree.TinyMappingFactory;
 import net.fabricmc.mapping.tree.TinyTree;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.*;
@@ -61,7 +65,7 @@ public class ModRemappingCallbackMixin {
 		if (liteMods.isEmpty())
 			return false;
 
-		TinyTree tree = Main.getMappings();
+		TinyTree tree = getMappings();
 		String targetNamespace = FabricLoader.getInstance().getMappingResolver().getCurrentRuntimeNamespace();
 		LitemodRemapper remapper = new LitemodRemapper(tree, targetNamespace);
 
@@ -93,5 +97,18 @@ public class ModRemappingCallbackMixin {
 		System.out.println("RESTART MC TO LOAD THEM!");
 
 		return true;
+	}
+
+	private static final String TINY_MAPPINGS = "mappings/mappings.tiny";
+	private static TinyTree getMappings(){
+		try (InputStream inputStream = Main.class.getClassLoader().getResourceAsStream(TINY_MAPPINGS)) {
+			if (inputStream == null)
+				throw new IOException("inputStream is null");
+
+			BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
+			return TinyMappingFactory.loadWithDetection(reader);
+		} catch (IOException e) {
+			throw new RuntimeException("Cannot load " + TINY_MAPPINGS + " from classpath!", e);
+		}
 	}
 }
