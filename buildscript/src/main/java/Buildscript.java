@@ -11,15 +11,26 @@ import io.github.coolcrabs.brachyura.minecraft.VersionMeta;
 import io.github.coolcrabs.brachyura.processing.sinks.AtomicZipProcessingSink;
 import io.github.coolcrabs.brachyura.processing.sources.DirectoryProcessingSource;
 import io.github.coolcrabs.brachyura.project.Task;
+import io.github.coolcrabs.brachyura.util.NetUtil;
+import io.github.coolcrabs.brachyura.util.Util;
 import net.fabricmc.mappingio.tree.MappingTree;
+import org.jetbrains.annotations.Nullable;
+import org.tinylog.Logger;
 
 import javax.tools.StandardLocation;
+import java.io.IOException;
+import java.io.InputStream;
 import java.lang.reflect.Field;
+import java.net.*;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
+import java.util.zip.GZIPInputStream;
+
+import static io.github.coolcrabs.brachyura.util.NetUtil.humanReadableByteCountSI;
 
 public class Buildscript extends SimpleFabricProject {
 	@Override
@@ -49,7 +60,9 @@ public class Buildscript extends SimpleFabricProject {
 
 	@Override
 	public void getModDependencies(ModDependencyCollector d) {
-		d.addMaven(
+		// Fix for brachyura using the default java User-Agent, which is blocked by cloudflare
+		System.setProperty("http.agent", "brachyura http agent");
+		/*d.addMaven(
 				Maven.MAVEN_LOCAL,
 				new MavenId(
 						"de.skyrising",
@@ -58,7 +71,27 @@ public class Buildscript extends SimpleFabricProject {
 				),
 				FabricContext.ModDependencyFlag.COMPILE,
 				FabricContext.ModDependencyFlag.RUNTIME
+		);*/
+		d.addMaven(
+				"https://repsy.io/mvn/enderzombi102/mc/",
+				new MavenId(
+						"com.enderzombi102",
+						"modmenu-legacy",
+						"1.17.1+1.12.2"
+				),
+				FabricContext.ModDependencyFlag.COMPILE,
+				FabricContext.ModDependencyFlag.RUNTIME
 		);
+		/*d.addMaven(
+				"https://maven.legacyfabric.net/",
+				new MavenId(
+						"net.legacyfabric.legacy-fabric-api",
+						"legacy-fabric-api",
+						"1.8.0+1.12.2"
+				),
+				FabricContext.ModDependencyFlag.COMPILE,
+				FabricContext.ModDependencyFlag.RUNTIME
+		);*/
 	}
 
 	@Override
@@ -150,12 +183,12 @@ public class Buildscript extends SimpleFabricProject {
 
 		// where the output jars are
 		Path outJar = getBuildLibsDir().resolve(getModId() + "-" + getVersion() + ".jar");
-		Path outJarSources = getBuildLibsDir().resolve(getModId() + "-" + getVersion() + "-sources.jar");
+		//Path outJarSources = getBuildLibsDir().resolve(getModId() + "-" + getVersion() + "-sources.jar");
 
 		try (
 			// create the output sinks
 			AtomicZipProcessingSink jarSink = new AtomicZipProcessingSink(outJar);
-			AtomicZipProcessingSink jarSourcesSink = new AtomicZipProcessingSink(outJarSources)
+			//AtomicZipProcessingSink jarSourcesSink = new AtomicZipProcessingSink(outJarSources)
 		) {
 			// make sure all dependencies are loaded
 			context.get().modDependencies.get(); // Ugly hack
@@ -165,7 +198,7 @@ public class Buildscript extends SimpleFabricProject {
 
 			// collect the output jar
 			context.get().getRemappedClasses(module.get()).values().forEach(s -> s.getInputs(jarSink));
-
+/*
 			// collect the sources
 			for (Path p : module.get().getSrcDirs()) {
 				new DirectoryProcessingSource(p).getInputs(jarSourcesSink);
@@ -183,14 +216,15 @@ public class Buildscript extends SimpleFabricProject {
 				result.getOutputLocation(StandardLocation.SOURCE_OUTPUT, jarSourcesSink);
 			} catch (NoSuchFieldException | IllegalAccessException e) {
 				throw new RuntimeException(e);
-			}
+			}*/
 
 			// finish the sinks
 			jarSink.commit();
-			jarSourcesSink.commit();
+			//jarSourcesSink.commit();
 		}
 
 		// return an object containing the output paths
-		return new JavaJarDependency(outJar, outJarSources, getId());
+		//return new JavaJarDependency(outJar, outJarSources, getId());
+		return new JavaJarDependency(outJar, null, getId());
 	}
 }
