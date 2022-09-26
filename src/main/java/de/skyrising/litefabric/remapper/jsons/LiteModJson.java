@@ -21,7 +21,6 @@ public class LiteModJson {
     public final String mcVersion;
     public final String revision;
     public final List<String> dependsOn;
-    //TODO: dependsOn? (List<String>, not sure how the fabric format looks for it), also add LiteFabric as a dep
     public final List<String> mixinConfigs;
     //public String dynamicVersion;
     //public String dynamicDisplayName;

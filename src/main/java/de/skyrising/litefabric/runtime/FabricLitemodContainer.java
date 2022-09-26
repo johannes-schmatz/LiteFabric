@@ -1,14 +1,12 @@
 package de.skyrising.litefabric.runtime;
 
 import de.skyrising.litefabric.common.EntryPointType;
-import de.skyrising.litefabric.liteloader.Configurable;
 import de.skyrising.litefabric.liteloader.LiteMod;
 import de.skyrising.litefabric.liteloader.modconfig.ConfigPanel;
 import net.fabricmc.loader.impl.launch.FabricLauncherBase;
 import net.minecraft.client.gui.screen.Screen;
 
 import java.io.*;
-import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.*;
@@ -75,37 +73,15 @@ public class FabricLitemodContainer {
 				@SuppressWarnings("unchecked")
 				Supplier<Screen> configScreenFactory = (Supplier<Screen>) getConfigScreenFactory.invoke(panel);
 
-/*				return configScreenFactory.get();
-
-				Class<?> superCls = cls.getSuperclass();
-				Field configScreenFactoryField = superCls.getField("configScreenFactory");
-
-				//TODO: this stuff doesn't work in the dev env?
-				@SuppressWarnings("unchecked")
-				Supplier<? extends Screen> configScreenFactory = (Supplier<? extends Screen>) configScreenFactoryField.get(panel);
-
-				return configScreenFactory.get();
-*/
-				// use a custom Screen class that just opens the malilib screen when initialized
-				//return new ModConfigHelperScreen(panel);
+				return configScreenFactory.get(); // TODO: not sure if this will actually do what we want
 			} catch (ClassNotFoundException | IllegalAccessException | InstantiationException |
-					 NoSuchMethodException | InvocationTargetException e) {
+					 InvocationTargetException e) {
 				throw new RuntimeException(e);
+			} catch (NoSuchMethodException ignored) {
+				//throw new RuntimeException(e); // TODO: for now ignore it, as masa didn't release new versions yet
 			}
 		}
 
 		return null;
-	}
-
-	private static class ModConfigHelperScreen extends Screen {
-		ConfigPanel panel;
-		ModConfigHelperScreen(ConfigPanel panel) {
-			this.panel = panel;
-		}
-
-		@Override
-		public void init() {
-			panel.onPanelShown(null);
-		}
 	}
 }

@@ -44,7 +44,7 @@ public class LiteFabric {
 	public void addResourcePacks(List<ResourcePack> resourcePacks) {
 		addMods();
 
-		for (String modId: mods.keySet()) {
+		for (String modId: mods.keySet()) { // TODO: handle litemods that don't have resources?
 			Optional<ModContainer> container = FabricLoader.getInstance().getModContainer(modId);
 
 			container.ifPresent(modContainer ->
