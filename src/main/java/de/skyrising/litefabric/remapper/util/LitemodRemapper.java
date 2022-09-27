@@ -53,6 +53,30 @@ public class LitemodRemapper extends Remapper implements IRemapper {
   }
 
 
+Caused by: org.spongepowered.asm.mixin.injection.throwables.InjectionError: Critical injection failure: Callback method onHandleRightClickPre(Lorg/spongepowered/asm/mixin/injection/callback/CallbackInfo;)V in mixins.litematica.json:MixinMinecraft from mod litematica failed injection check, (0/1) succeeded. Scanned 1 target(s). Using refmap mixins.litematica.refmap.json
+
+
+
+java.lang.RuntimeException: java.lang.ArithmeticException: / by zero
+	at de.skyrising.litefabric.runtime.LiteFabric.onInitCompleted(LiteFabric.java:111)
+	at net.minecraft.client.MinecraftClient.handler$zzn000$litefabric$onGameInitDone(MinecraftClient.java:4548)
+	at net.minecraft.client.MinecraftClient.initializeGame(MinecraftClient.java:515)
+	at net.minecraft.client.MinecraftClient.run(MinecraftClient.java:361)
+	at net.minecraft.client.main.Main.main(Main.java:109)
+	at net.fabricmc.loader.impl.game.minecraft.MinecraftGameProvider.launch(MinecraftGameProvider.java:461)
+	at net.fabricmc.loader.impl.launch.knot.Knot.launch(Knot.java:74)
+	at net.fabricmc.loader.launch.knot.KnotClient.main(KnotClient.java:28)
+Caused by: java.lang.ArithmeticException: / by zero
+	at net.minecraft.client.texture.TextureUtil.method_7022(TextureUtil.java:149)
+	at net.minecraft.client.texture.TextureUtil.method_5861(TextureUtil.java:48) // third parameter of this function is 0
+	at com.mamiyaotaru.voxelmap.c.h.if(Unknown Source)
+	at com.mamiyaotaru.voxelmap.u.do(Unknown Source)
+	at com.mamiyaotaru.voxelmap.t.reload(Unknown Source)
+	at net.minecraft.resource.ReloadableResourceManagerImpl.registerListener(ReloadableResourceManagerImpl.java:99)
+	at com.mamiyaotaru.voxelmap.t.do(Unknown Source)
+	at com.mamiyaotaru.voxelmap.litemod.LiteModVoxelMap.onInitCompleted(Unknown Source)
+	at de.skyrising.litefabric.runtime.LiteFabric.onInitCompleted(LiteFabric.java:109)
+	... 7 more
 
      */
 
@@ -77,6 +101,47 @@ public class LitemodRemapper extends Remapper implements IRemapper {
                 // if it's not the Mixin annotation, continue searching
                 if (!"Lorg/spongepowered/asm/mixin/Mixin;".equals(classAnnotation.desc))
                     continue;
+
+                // TODO: maybe find a smarter way of getting rid of the itemscroller + forge thingy:
+                //  https://discord.com/channels/169369095538606080/913891227802427402/1024062933501751306
+                {
+                    for (MethodNode method: node.methods) {
+                        if (method.visibleAnnotations == null)
+                            continue;
+
+                        for (AnnotationNode methodAnnotation: method.visibleAnnotations) {
+                            if (!"Lorg/spongepowered/asm/mixin/injection/Inject;".equals(methodAnnotation.desc))
+                                continue;
+
+                            for (int i = 0; i < methodAnnotation.values.size(); i += 2) {
+                                Object value = methodAnnotation.values.get(i + 1);
+
+                                if (!("at".equals(methodAnnotation.values.get(i)) && value instanceof List))
+                                    continue;
+
+                                @SuppressWarnings("unchecked")
+                                List<AnnotationNode> ats = (List<AnnotationNode>) value;
+
+                                for (AnnotationNode at: ats) {
+                                    if (!"Lorg/spongepowered/asm/mixin/injection/At;".equals(at.desc))
+                                        continue;
+
+                                    for (int j = 0; j < at.values.size(); j += 2) {
+                                        if (!"target".equals(at.values.get(j)))
+                                            continue;
+
+                                        Object name = at.values.get(j + 1);
+                                        if (name instanceof String && ((String) name).startsWith("Lnet/minecraftforge")) {
+                                            ats.remove(at);
+                                        }
+
+                                        break; // there's only one target per @At
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
 
                 // store all fields with the @Shadow annotation in this.shadowFields
                 {
