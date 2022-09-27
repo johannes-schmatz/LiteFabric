@@ -59,7 +59,7 @@ public class FabricModJson {
 		String description;
 		List<String> authors;
 		HashMap<String, String> contact = new HashMap<>();
-		HashMap<String, List<String>> entrypoints = new HashMap<>();
+		String icon;
 		HashMap<String, String> depends = new HashMap<>();
 		List<String> badges = new ArrayList<>();
 
@@ -67,25 +67,43 @@ public class FabricModJson {
 			assert Objects.equals(liteModJson.name, mcmodInfoJson.id);
 			description = mcmodInfoJson.description;
 			authors = mcmodInfoJson.authors;
-			contact.put("homepage", mcmodInfoJson.url); // TODO: consider adding masa's github (+ issues) for masa's mods (or changing the url to masa's webpage)
+			contact.put("homepage", mcmodInfoJson.url);
+			icon = mcmodInfoJson.logoFile.isEmpty() ? "pack.png" : mcmodInfoJson.logoFile;
 		} else {
 			description = liteModJson.description;
 			authors = Collections.singletonList(liteModJson.author);
+			icon = "pack.png";
 		}
 
 		String displayName = liteModJson.displayName;
 		if (displayName == null)
 			displayName = liteModJson.name;
 
-		entrypoints.put("preLaunch", Collections.singletonList(EntryPointType.getPreLaunchEntryPoint(liteModJson.name, '.'))); //TODO: somehow get the package + class name here
+		String preLaunchClass = EntryPointType.getPreLaunchEntryPoint(id, '.');
 
-		depends.put("minecraft", "1.12.2"); // TODO: check if we want to add malilib here maybe
+		// force mc 1.12.2 and the use of litefabric
+		depends.put("minecraft", "1.12.2");
+		depends.put("litefabric", "*");
 
+		// add the old dependencies
+		for (String dependency: liteModJson.dependsOn) {
+			depends.put(dependency.toLowerCase(), "*");
+		}
+
+		// display the mod as a liteloader mod
 		badges.add("liteloader");
 
-		// TODO: check if we want malilib to be a lib
-		//if ("malilib".equals(meta.name))
-		//	badges.add("library");
+		// we consider malilib to be a library
+		if ("malilib".equals(id))
+			badges.add("library");
+
+		// add in masa's urls
+		if (MasaMods.contains(id)) {
+			contact.put("homepage", MasaMods.HOMEPAGE);
+			contact.put("issues", MasaMods.getMasaModIssues(id));
+			contact.put("sources", MasaMods.getMasaModSources(id));
+			contact.put("discord", MasaMods.DISCORD);
+		}
 
 		return new FabricModJson(
 				id,
@@ -94,11 +112,37 @@ public class FabricModJson {
 				description,
 				authors,
 				contact,
-				"assets/" + id + "/icon.png",
-				entrypoints,
+				icon,
+				Collections.singletonMap("preLaunch", Collections.singletonList(preLaunchClass)),
 				liteModJson.mixinConfigs,
 				depends,
 				Collections.singletonMap("modmenu", Collections.singletonMap("badges", badges))
 		);
+	}
+
+	private static class MasaMods { // TODO: format better
+		private static final Set<String> MASA_MODS = new HashSet<>();
+		private static final String HOMEPAGE = "https://masa.dy.fi/mcmods/client_mods/?mcver=1.12.2";
+		private static final String DISCORD = "https://masa.dy.fi/discord";
+
+		private static boolean contains(String modId) {
+			return MASA_MODS.contains(modId);
+		}
+
+		private static String getMasaModIssues(String modId) {
+			return "https://github.com/maruohon/" + modId + "/issues";
+		}
+
+		private static String getMasaModSources(String modId) {
+			return "https://github.com/maruohon/" + modId + "/tree/liteloader_1.12.2";
+		}
+
+		static {
+			MASA_MODS.add("itemscroller");
+			MASA_MODS.add("malilib");
+			MASA_MODS.add("minihud");
+			MASA_MODS.add("litematica");
+			MASA_MODS.add("tweakeroo");
+		}
 	}
 }
