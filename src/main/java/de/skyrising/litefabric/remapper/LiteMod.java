@@ -1,5 +1,6 @@
 package de.skyrising.litefabric.remapper;
 
+import de.skyrising.litefabric.Profiler;
 import de.skyrising.litefabric.common.EntryPointType;
 import de.skyrising.litefabric.remapper.jsons.*;
 import de.skyrising.litefabric.remapper.util.FileSystemDelegate;
@@ -46,6 +47,7 @@ public class LiteMod {
 	}
 
 	public void write(LitemodRemapper remapper, Path fabricMod) {
+		Profiler.push("openFs");
 		FileSystemDelegate outputJarFileSystemDelegate;
 		try {
 			outputJarFileSystemDelegate = FileSystemDelegate.writeFileSystem(fabricMod);
@@ -55,30 +57,35 @@ public class LiteMod {
 
 		FileSystem outputJarFileSystem = outputJarFileSystemDelegate.get();
 
+		Profiler.swap("otherFiles");
 		try {
 			writeOtherFiles(this.jarFileSystemDelegate.get(), outputJarFileSystem);
-
+			Profiler.swap("remappedClasses");
 			writeRemappedClasses(remapper, this.jarFileSystemDelegate.get(), outputJarFileSystem);
-
+			Profiler.swap("fmj");
 			this.fabricModJson.write(outputJarFileSystem);
 
 			// write this after the classes, as it needs the classes to be remapped to figure out the super classes specified in the mixin annotation
 			for (Map.Entry<Path, RefmapJson> entry: refmaps.entrySet()) {
 				RefmapJson refmap = entry.getValue();
+				Profiler.swap("remap " + entry.getKey().getFileName());
 				refmap.remap(remapper);
+				Profiler.swap("write " + entry.getKey().getFileName());
 				refmap.write(entry.getKey(), outputJarFileSystem);
 			}
-
+			Profiler.swap("settingsClass");
 			writeSettingsClass(outputJarFileSystem);
 		} catch (IOException e) {
 			throw new RuntimeException("IOException while trying to write JAR at " + fabricMod + ": " + e.getMessage(), e);
 		}
+		Profiler.swap("close");
 
 		try {
 			outputJarFileSystemDelegate.close();
 		} catch (Exception e) {
 			throw new RuntimeException("Failed to close new mod JAR at " + fabricMod + ": " + e.getMessage());
 		}
+		Profiler.pop();
 	}
 
 	private void writeSettingsClass(FileSystem outputJarFileSystem) throws IOException {
@@ -94,14 +101,8 @@ public class LiteMod {
 
 	private void writeOtherFiles(FileSystem inputJarFileSystem, FileSystem outputJarFileSystem) throws IOException {
 		for (Map.Entry<String, String> entry: otherFiles.entrySet()) {
-			String oldFileName = entry.getKey();
-			String newFileName = entry.getValue();
-
-			//if ("/pack.mcmeta".equals(newFileName))
-			//	newFileName = "/assets" + newFileName;
-
-			Path input = inputJarFileSystem.getPath(oldFileName);
-			Path output = outputJarFileSystem.getPath(newFileName);
+			Path input = inputJarFileSystem.getPath(entry.getKey());
+			Path output = outputJarFileSystem.getPath(entry.getValue());
 
 			if (!Files.exists(output.getParent()))
 				Files.createDirectories(output.getParent());
@@ -112,86 +113,87 @@ public class LiteMod {
 	}
 
 	static class ClassStorage {
-		public String className;
-		public String classNameInternal;
-		public byte[] inputBytes;//rename? rawBytes?
-		public byte[] outputBytes;//rename?
+		public final String className;
+		public final Path inputPath;
+		public final Path outputPath;
 		public ClassNode inputNode;
-		public ClassNode outputNode;
-		public Path inputPath;
-		public Path outputPath;
+		public ClassNode remapped;
+
+		ClassStorage(String className, Path inputPath, Path outputPath) {
+			this.className = className;
+			this.inputPath = inputPath;
+			this.outputPath = outputPath;
+		}
+
+		public void remap(LitemodRemapper remapper) {
+			remapped = new ClassNode();
+			ClassRemapper clsRemapper = new ClassRemapper(remapped, remapper);
+			inputNode.accept(clsRemapper);
+		}
+
+		public void read() {
+			byte [] raw;
+			try {
+				raw = Files.readAllBytes(inputPath);
+			} catch (IOException e) {
+				throw new RuntimeException("Can not read bytes of class " + className, e);
+			}
+
+			ClassReader reader = new ClassReader(raw);
+			inputNode = new ClassNode();
+			reader.accept(inputNode, ClassReader.EXPAND_FRAMES);
+		}
+
+		public void write() {
+			ClassWriter writer = new ClassWriter(Opcodes.ASM9);
+			remapped.accept(writer);
+			byte[] raw = writer.toByteArray();
+
+			try {
+				// creating folders isn't needed, those are copied with the other files stuff
+				Files.write(outputPath, raw);
+			} catch (IOException e) {
+				throw new RuntimeException("Failed to write bytes of class " + className, e);
+			}
+		}
 	}
 
 	private void writeRemappedClasses(LitemodRemapper remapper, FileSystem inputFileSystem, FileSystem outputFileSystem) throws IOException {
 		Set<ClassStorage> storages = new LinkedHashSet<>(classes.size());
 
-		//TODO: improve this stuff here, clean up, only store needed values in ClassStorage
+		Profiler.push("read");
 		for (String className: classes) {
-			ClassStorage storage = new ClassStorage();
-			storage.className = className;
-			storage.classNameInternal = className.replace('.', '/') + ".class";
-			storage.inputPath = inputFileSystem.getPath(storage.classNameInternal);
-			storage.outputPath = outputFileSystem.getPath(storage.classNameInternal);
+			String classNameInternal = className.replace('.', '/') + ".class";
 
-			try {//TODO: refactor, move to ClassStorage
-				storage.inputBytes = Files.readAllBytes(storage.inputPath);
-			} catch (IOException e) {
-				throw new RuntimeException("Can not read bytes of class " + className, e);
-			}
+			Path inputPath = inputFileSystem.getPath(classNameInternal);
+			Path outputPath = outputFileSystem.getPath(classNameInternal);
 
-			ClassReader reader = new ClassReader(storage.inputBytes);
-			ClassNode raw = new ClassNode();
-			reader.accept(raw, ClassReader.EXPAND_FRAMES);
+			ClassStorage storage = new ClassStorage(className, inputPath, outputPath);
 
-			remapper.addClass(raw); //TODO: [done] first run this for all classes, then remap all classes
+			storage.read();
 
-			storage.inputNode = raw;
+			remapper.addClass(storage.inputNode);
 
 			storages.add(storage);
 		}
-
+		Profiler.swap("remap");
 		for (ClassStorage storage: storages) {
-			storage.outputBytes = remapClass(storage.inputNode, remapper);
-		}
+			storage.remap(remapper);
 
-		for (ClassStorage storage: storages) {
-			// creating folders isn't needed, those are copied with the other files stuff
-			Files.write(storage.outputPath, storage.outputBytes);
-		}
-	}
-
-	private byte[] remapClass(ClassNode raw, LitemodRemapper remapper) {
-		ClassNode remapped = new ClassNode();
-		ClassRemapper clsRemapper = new ClassRemapper(remapped, remapper);
-		raw.accept(clsRemapper);
-
-		// it's a malilib config redirect panel
-		if ("fi/dy/masa/malilib/gui/config/liteloader/RedirectingConfigPanel".equals(remapped.superName)) {
-			this.preLaunchClassBuilder.addEntryPoint(EntryPointType.MALILIB_REDIRECTING_CONFIG_PANEL, remapped.name);
-		}
-
-		//if (isConfigGuiCandidate(remapped))
-		//	System.out.println("config gui candidate! " + remapped.name);
-		//	mod.configGuiCandidates.add(remapped.name);
-
-		// fix non-public overwrite methods in dev
-		// most likely fabric launcher already does this for us
-		/*if (FabricLoader.getInstance().isDevelopmentEnvironment()) { //doesn't fabric loader already do that for us?
-			if (Annotations.getInvisible(remapped, Mixin.class) != null) {
-				for (MethodNode method : remapped.methods) {
-					if ((method.access & Opcodes.ACC_STATIC) != 0) continue;
-					if (method.visibleAnnotations == null || Annotations.getVisible(method, Overwrite.class) != null) {
-						Bytecode.setVisibility(method, Opcodes.ACC_PUBLIC);
-					}
-				}
+			// it's a malilib config redirect panel
+			if ("fi/dy/masa/malilib/gui/config/liteloader/RedirectingConfigPanel".equals(storage.remapped.superName)) {
+				this.preLaunchClassBuilder.addEntryPoint(EntryPointType.MALILIB_REDIRECTING_CONFIG_PANEL, storage.remapped.name);
 			}
-		}*/
 
-		// also move this step to later??
-		ClassWriter writer = new ClassWriter(Opcodes.ASM9);
-		remapped.accept(writer);
-
-		return writer.toByteArray();
+			//if (isConfigGuiCandidate(remapped))
+			//	System.out.println("config gui candidate! " + remapped.name);
+			//	mod.configGuiCandidates.add(remapped.name);
+		}
+		Profiler.swap("write");
+		for (ClassStorage storage: storages) {
+			storage.write();
+		}
+		Profiler.pop();
 	}
 
 	private static boolean isConfigGuiCandidate(ClassNode node) {
@@ -207,6 +209,7 @@ public class LiteMod {
 	));
 
 	public static LiteMod load(Path jarPath) {
+		Profiler.push("openFs");
 		if (!Files.exists(jarPath)) {
 			throw new RuntimeException("LiteMod at " + jarPath + " doesn't exist.");
 		}
@@ -223,6 +226,7 @@ public class LiteMod {
 
 		FileSystem jarFileSystem = jarFileSystemDelegate.get();
 
+		Profiler.swap("otherFiles");
 		Path rootDir = jarFileSystem.getRootDirectories().iterator().next();
 		Map<String, String> otherFiles = new LinkedHashMap<>();
 		try {
@@ -239,6 +243,8 @@ public class LiteMod {
 		otherFiles.remove("/META-INF/fml_cache_class_versions.json");
 		otherFiles.remove("/META-INF/fml_cache_annotation.json");
 
+		Profiler.swap("entrypoints");
+
 		List<String> entryPoints = new ArrayList<>();
 		try {
 			Files.walk(rootDir).filter(path -> {
@@ -253,6 +259,8 @@ public class LiteMod {
 		} catch (IOException e) {
 			throw new RuntimeException("Could not search for LiteMod entry point", e);
 		}
+
+		Profiler.swap("classes");
 
 		Set<String> classes = new LinkedHashSet<>();
 		try {
@@ -269,15 +277,27 @@ public class LiteMod {
 			throw new RuntimeException("Could not search for classes", e);
 		}
 
+		Profiler.swap("liteJson");
+
 		LiteModJson liteModJson = LiteModJson.load(jarFileSystem, jarPath, otherFiles);
+
+		Profiler.swap("mcModJson");
 
 		@Nullable McmodInfo mcmodInfoJson = McmodInfo.load(jarFileSystem, jarPath, otherFiles);
 
+		Profiler.swap("fabricJson");
+
 		FabricModJson fabricModJson = FabricModJson.from(liteModJson, mcmodInfoJson);
+
+		Profiler.swap("mixinJson");
 
 		Map<MixinsJson, Path> mixinConfigs = MixinsJson.load(jarFileSystem, jarPath, liteModJson);
 
+		Profiler.swap("refmaps");
+
 		Map<Path, RefmapJson> refmaps = RefmapJson.load(jarFileSystem, jarPath, mixinConfigs, otherFiles);
+
+		Profiler.pop();
 
 		return new LiteMod(fabricModJson, refmaps, entryPoints, classes, otherFiles, jarFileSystemDelegate);
 	}
