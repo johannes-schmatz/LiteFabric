@@ -130,6 +130,7 @@ public class LiteMod {
 			remapped = new ClassNode();
 			ClassRemapper clsRemapper = new ClassRemapper(remapped, remapper);
 			inputNode.accept(clsRemapper);
+			remapper.fixNonPublicOverwritesInDev(remapped);
 		}
 
 		public void read() {

@@ -43,4 +43,8 @@ public class EntryPointType {
 		// replace liteloader in filename with fabricloader, litemod with jar
 		return liteModFileName.replaceAll("liteloader", "fabricloader").replaceAll("\\.litemod$", ".jar");
 	}
+
+	public static String remapCrashLog(String crashLog) {
+		return ModFolderRemapper.getRemapper().remapCrashLog(crashLog);
+	}
 }

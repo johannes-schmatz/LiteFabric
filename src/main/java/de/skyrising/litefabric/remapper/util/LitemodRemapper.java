@@ -529,6 +529,108 @@ public class LitemodRemapper extends Remapper implements IRemapper {
         }
 
         // just a normal field
-        return "L" + map(owner) + ";" + mapFieldName(owner, name, desc) + ":" + desc;
+        return "L" + map(owner) + ";" + mapFieldName(owner, name, desc) + ":" + mapDesc(desc);
+    }
+
+    // method that allow remapping a crash report
+    public void remapCrashLog(Reader reader, Writer writer) throws IOException {
+        BufferedReader bufferedReader = new BufferedReader(reader);
+        BufferedWriter bufferedWriter = new BufferedWriter(writer);
+
+        // this regex does it all.
+        final Pattern crashLogPattern = Pattern.compile(
+                "^(?<A>\tat )(?<B>(?!java\\.|sun\\.)[.$\\p{Alnum}\n]+)\\.(?<C>[$\\p{Alnum}]+)(?<D>.*)$"
+        );
+
+        String line;
+        while (null != (line = bufferedReader.readLine())) {
+            Matcher matcher = crashLogPattern.matcher(line);
+
+            if (matcher.matches()) {
+                String prefix = matcher.group("A");
+                String clazz = matcher.group("B");
+                String method = matcher.group("C");
+                String suffix = matcher.group("D");
+
+                line = this.remapCrashLogLine(prefix, clazz, method, suffix);
+            }
+
+            bufferedWriter.write(line + "\n");
+        }
+
+        bufferedWriter.close();
+    }
+
+    // TODO: beautify
+    private String remapCrashLogLine(String prefix, String clazz, String method, String suffix) {
+        ClassDef cls = classes.get(clazz.replaceAll("\\.", "/"));
+
+        if (cls == null)
+            return prefix + clazz + "." + method + suffix;// + " // no matching class found!";
+
+        String mappedClazz = cls.getName("named");
+
+        // fall back to intermediary, if no name is found
+        if (mappedClazz.isEmpty()) {
+            mappedClazz = cls.getName("intermediary");
+            //System.out.println("no name for class " + clazz + " found! using intermediary one: " + mappedClazz);
+        }
+
+        mappedClazz = mappedClazz.replaceAll("/", ".");
+
+        Set<String> names = new LinkedHashSet<>();
+        for (MethodDef def: cls.getMethods()) {
+            String key = def.getName("official");
+            if (key.equals(method)) {
+
+                // try the named one, then use intermediary
+                String name = def.getName("named");
+                if (name.isEmpty()) {
+                    name = def.getName("intermediary");
+                    //System.out.println("no name for method " + method + " found! using intermediary one: " + name);
+                }
+
+                names.add(name); // sadly crash logs don't have method signatures in them
+            }
+        }
+
+        String mappedMethod;
+        if (names.size() == 0) {
+            mappedMethod = method;
+        } else if (names.size() == 1) {
+            mappedMethod = names.iterator().next();
+        } else {
+            mappedMethod = names.toString();
+        }
+
+        return prefix + mappedClazz + "." + mappedMethod + suffix + (names.size() == 1 ? " (perfect method match)" : "");
+    }
+
+    public String remapCrashLog(String crashLog) {
+        StringReader reader = new StringReader(crashLog);
+        StringWriter writer = new StringWriter();
+
+        try {
+            remapCrashLog(reader, writer);
+        } catch (IOException e) {
+            // this should never happen
+            throw new RuntimeException(e);
+        }
+
+        return writer.toString();
+    }
+
+    public void fixNonPublicOverwritesInDev(ClassNode remapped) {
+        if (!"named".equals(this.targetNamespace))
+            return;
+
+        if (Annotations.getInvisible(remapped, Mixin.class) != null) {
+            for (MethodNode method : remapped.methods) {
+                if ((method.access & Opcodes.ACC_STATIC) != 0) continue;
+                if (method.visibleAnnotations == null || Annotations.getVisible(method, Overwrite.class) != null) {
+                    Bytecode.setVisibility(method, Opcodes.ACC_PUBLIC);
+                }
+            }
+        }
     }
 }

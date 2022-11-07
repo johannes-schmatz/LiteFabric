@@ -219,22 +219,33 @@ public class LiteFabric {
 	private boolean wasFullscreen;
 	public void onResize() {
 		MinecraftClient client = MinecraftClient.getInstance();
+
+		// TODO: recheck with new mappings
 		boolean fullscreen = client.isWindowFocused(); // incorrect yarn name
 		boolean fullscreenChanged = fullscreen != wasFullscreen;
-		if (fullscreenChanged) wasFullscreen = fullscreen;
-		ListenerType<ViewportListener> viewportListeners = ListenerType.VIEWPORT;
-		if (!viewportListeners.hasListeners()) return;
+
+		if (fullscreenChanged) {
+			wasFullscreen = fullscreen;
+		}
+
+		if (!ListenerType.VIEWPORT.hasListeners()) {
+			return;
+		}
+
 		Window window = new Window(client);
-		int width = client.width;
-		int height = client.height;
-		try {
+		/*try {
+		// TODO: cleanup
 			if (fullscreenChanged) {
 				ListenerType.MH_FULLSCREEN_TOGGLED.invokeExact(fullscreen);
 			}
-			ListenerType.MH_VIEWPORT_RESIZED.invokeExact(window, width, height);
+			ListenerType.MH_VIEWPORT_RESIZED.invokeExact(window, client.width, client.height);
 		} catch (Throwable e) {
 			throw new RuntimeException(e);
+		}*/
+		if (fullscreenChanged) {
+			ListenerType.invoke(ListenerType.MH_FULLSCREEN_TOGGLED, fullscreen);
 		}
+		ListenerType.invoke(ListenerType.MH_VIEWPORT_RESIZED, window, client.width, client.height);
 	}
 
 	public Text filterChat(Text original) {

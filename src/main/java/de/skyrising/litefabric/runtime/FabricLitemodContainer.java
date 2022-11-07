@@ -7,8 +7,10 @@ import net.fabricmc.loader.impl.launch.FabricLauncherBase;
 import net.minecraft.client.gui.screen.Screen;
 
 import java.io.*;
+import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.nio.file.Path;
 import java.util.*;
 import java.util.function.Supplier;
 
@@ -76,6 +78,28 @@ public class FabricLitemodContainer {
 
 		for (String className: configPanelClasses) {
 			try {
+				ClassLoader loader = FabricLitemodContainer.class.getClassLoader();
+
+				Class<?> panelClass = loader.loadClass(className.replace('/', '.'));
+				Class<?> fieldClass = loader.loadClass("fi.dy.masa.malilib.gui.config.liteloader.RedirectingConfigPanel");
+
+				Field factory = fieldClass.getDeclaredField("configScreenFactory");
+				factory.setAccessible(true);
+
+				ConfigPanel panel = (ConfigPanel) panelClass.newInstance();
+
+				@SuppressWarnings("unchecked")
+				Supplier<Screen> configScreenFactory = (Supplier<Screen>) factory.get(panel);
+
+				return configScreenFactory.get();
+			} catch (InstantiationException | IllegalAccessException | ClassNotFoundException | NoSuchFieldException e) {
+				e.printStackTrace();
+				//throw new RuntimeException(e);
+			}
+
+
+			System.err.println(className + " is sus!");
+			try {
 				Class<?> cls = FabricLitemodContainer.class.getClassLoader().loadClass(className.replace('/', '.'));
 				ConfigPanel panel = (ConfigPanel) cls.newInstance();
 				Method getConfigScreenFactory = cls.getMethod("getConfigScreenFactory");
@@ -85,9 +109,8 @@ public class FabricLitemodContainer {
 
 				return configScreenFactory.get(); // TODO: not sure if this will actually do what we want
 			} catch (ClassNotFoundException | IllegalAccessException | InstantiationException |
-					 InvocationTargetException e) {
-				throw new RuntimeException(e);
-			} catch (NoSuchMethodException ignored) {
+					 InvocationTargetException | NoSuchMethodException e) {
+				e.printStackTrace();
 				//throw new RuntimeException(e); // TODO: for now ignore it, as masa didn't release new versions yet
 			}
 		}

@@ -55,7 +55,7 @@ public class FabricModJson {
 	}
 
 	public static FabricModJson from(LiteModJson liteModJson, @Nullable McmodInfo mcmodInfoJson) {
-		String id = liteModJson.name.toLowerCase();
+		String id = liteModJson.name.toLowerCase().replaceAll(" ", "_");
 		String description;
 		List<String> authors;
 		HashMap<String, String> contact = new HashMap<>();
@@ -86,8 +86,10 @@ public class FabricModJson {
 		depends.put("litefabric", "*");
 
 		// add the old dependencies
-		for (String dependency: liteModJson.dependsOn) {
-			depends.put(dependency.toLowerCase(), "*");
+		if (liteModJson.dependsOn != null) {
+			for (String dependency : liteModJson.dependsOn) {
+				depends.put(dependency.toLowerCase(), "*");
+			}
 		}
 
 		// display the mod as a liteloader mod
