@@ -1,35 +1,37 @@
 {
-  "schemaVersion": 1,
-  "id": "litefabric",
-  "version": "0.0.0-dev",
-  "name": "LiteFabric",
-  "description": "Launch LiteLoader mods with Fabric",
-  "authors": [
-    "skyrising",
-    "Zeichenreihe"
-  ],
-  "contact": {
-    "homepage": "https://skyrising.xyz",
-    "sources": "https://github.com/skyrising/LiteFabric",
-    "issues": "https://github.com/skyrising/LiteFabric/issues"
-  },
-  "license": "MIT",
-  "icon": "assets/litefabric/icon.png",
-  "environment": "client",
-  "entrypoints": {
-    "modmenu": [
-      "de.skyrising.litefabric.runtime.ModMenuCompat"
-    ]
-  },
-  "mixins": [
-    "litefabric.mixins.json"
-  ],
-  "depends": {
-    "minecraft": "1.12.2"
-  },
-  "custom": {
-    "modmenu": {
-      "badges": ["library"]
-    }
-  }
+	"schemaVersion": 1,
+	"id": "litefabric",
+	"version": "0.0.0-dev",
+	"name": "LiteFabric",
+	"description": "Launch LiteLoader mods with Fabric",
+	"authors": [
+		"skyrising",
+		"Zeichenreihe"
+	],
+	"contact": {
+		"homepage": "https://skyrising.xyz",
+		"sources": "https://github.com/skyrising/LiteFabric",
+		"issues": "https://github.com/skyrising/LiteFabric/issues"
+	},
+	"license": "MIT",
+	"icon": "assets/litefabric/icon.png",
+	"environment": "client",
+	"entrypoints": {
+		"modmenu": [
+			"de.skyrising.litefabric.runtime.ModMenuCompat"
+		]
+	},
+	"mixins": [
+		"litefabric.mixins.json"
+	],
+	"depends": {
+		"minecraft": "1.12.2"
+	},
+	"custom": {
+		"modmenu": {
+			"badges": [
+				"library"
+			]
+		}
+	}
 }

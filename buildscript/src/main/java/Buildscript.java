@@ -1,36 +1,21 @@
-import io.github.coolcrabs.brachyura.compiler.java.JavaCompilationResult;
 import io.github.coolcrabs.brachyura.decompiler.BrachyuraDecompiler;
 import io.github.coolcrabs.brachyura.decompiler.fernflower.FernflowerDecompiler;
 import io.github.coolcrabs.brachyura.dependency.JavaJarDependency;
 import io.github.coolcrabs.brachyura.fabric.*;
 import io.github.coolcrabs.brachyura.fabric.FabricContext.ModDependencyCollector;
 import io.github.coolcrabs.brachyura.maven.Maven;
-import io.github.coolcrabs.brachyura.maven.MavenId;
 import io.github.coolcrabs.brachyura.minecraft.Minecraft;
 import io.github.coolcrabs.brachyura.minecraft.VersionMeta;
 import io.github.coolcrabs.brachyura.processing.sinks.AtomicZipProcessingSink;
 import io.github.coolcrabs.brachyura.processing.sources.DirectoryProcessingSource;
 import io.github.coolcrabs.brachyura.project.Task;
-import io.github.coolcrabs.brachyura.util.NetUtil;
-import io.github.coolcrabs.brachyura.util.Util;
 import net.fabricmc.mappingio.tree.MappingTree;
-import org.jetbrains.annotations.Nullable;
-import org.tinylog.Logger;
 
-import javax.tools.StandardLocation;
-import java.io.IOException;
-import java.io.InputStream;
-import java.lang.reflect.Field;
-import java.net.*;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
-import java.util.zip.GZIPInputStream;
-
-import static io.github.coolcrabs.brachyura.util.NetUtil.humanReadableByteCountSI;
 
 public class Buildscript extends SimpleFabricProject {
 	@Override
@@ -50,29 +35,24 @@ public class Buildscript extends SimpleFabricProject {
 
 	@Override
 	public MappingTree createMappings() {
-		return Yarn.ofMaven("https://maven.legacyfabric.net", FabricMaven.yarn(Versions.LEGACY_YARN)).tree;
+		return Versions.LEGACY_YARN.ofMaven(Yarn::ofMaven).tree;
 	}
 
 	@Override
 	public FabricLoader getLoader() {
-		return new FabricLoader(FabricMaven.URL, FabricMaven.loader(Versions.FABRIC_LOADER));
+		return Versions.FABRIC_LOADER.ofMaven(FabricLoader::new);
 	}
 
 	@Override
 	public void getModDependencies(ModDependencyCollector d) {
 		// Fix for brachyura using the default java User-Agent, which is blocked by cloudflare
 		System.setProperty("http.agent", "brachyura http agent");
-		/*d.addMaven(
-				Maven.MAVEN_LOCAL,
-				new MavenId(
-						"de.skyrising",
-						"modmenu",
-						Versions.MODMENU
-				),
+		d.add(
+				Versions.MODMENU.ofMaven(Maven::getMavenJarDep),
 				FabricContext.ModDependencyFlag.COMPILE,
 				FabricContext.ModDependencyFlag.RUNTIME
-		);*/
-		d.addMaven(
+		);
+		/*d.addMaven(
 				"https://repsy.io/mvn/enderzombi102/mc/",
 				new MavenId(
 						"com.enderzombi102",
@@ -81,7 +61,7 @@ public class Buildscript extends SimpleFabricProject {
 				),
 				FabricContext.ModDependencyFlag.COMPILE,
 				FabricContext.ModDependencyFlag.RUNTIME
-		);
+		);*/
 		/*d.addMaven(
 				"https://maven.legacyfabric.net/",
 				new MavenId(
@@ -98,14 +78,7 @@ public class Buildscript extends SimpleFabricProject {
 	public BrachyuraDecompiler decompiler() {
 		// Uses QuiltFlower instead of CFR
 		return new FernflowerDecompiler(
-				Maven.getMavenJarDep(
-						"https://maven.quiltmc.org/repository/release",
-						new MavenId(
-								"org.quiltmc",
-								"quiltflower",
-								Versions.QUILT_FLOWER
-						)
-				)
+				Versions.QUILT_FLOWER.ofMaven(Maven::getMavenJarDep)
 		);
 	}
 
@@ -113,14 +86,7 @@ public class Buildscript extends SimpleFabricProject {
 		@Override
 		protected MappingTree createIntermediary() {
 			// use legacy fabric intermediary
-			return Intermediary.ofMaven(
-					"https://maven.legacyfabric.net",
-					new MavenId(
-							"net.fabricmc",
-							"intermediary",
-							Versions.MINECRAFT
-					)
-			).tree;
+			return Versions.LEGACY_INTERMEDIARY.ofMaven(Intermediary::ofMaven).tree;
 		}
 	}
 
@@ -137,7 +103,7 @@ public class Buildscript extends SimpleFabricProject {
 		@Override
 		public List<String> ideVmArgs(boolean client) {
 			List<String> args = super.ideVmArgs(client);
-			args.add("-Djava.awt.headless=true"); // that way fabric loader doesn't open the pop-up screen
+			args.add("-D" + "java.awt.headless=true"); // that way fabric loader doesn't open the pop-up screen
 			return args;
 		}
 	}
@@ -194,7 +160,12 @@ public class Buildscript extends SimpleFabricProject {
 			context.get().modDependencies.get(); // Ugly hack
 
 			// run the toolchain and build it
-			resourcesProcessingChain().apply(jarSink, Arrays.stream(getResourceDirs()).map(DirectoryProcessingSource::new).collect(Collectors.toList()));
+			resourcesProcessingChain()
+					.apply(jarSink,
+							Arrays.stream(getResourceDirs())
+									.map(DirectoryProcessingSource::new)
+									.collect(Collectors.toList())
+					);
 
 			// collect the output jar
 			context.get().getRemappedClasses(module.get()).values().forEach(s -> s.getInputs(jarSink));
