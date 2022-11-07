@@ -18,6 +18,7 @@ import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
+import java.util.stream.Stream;
 import java.util.zip.ZipError;
 
 public class LiteMod {
@@ -158,7 +159,7 @@ public class LiteMod {
 		}
 	}
 
-	private void writeRemappedClasses(LitemodRemapper remapper, FileSystem inputFileSystem, FileSystem outputFileSystem) throws IOException {
+	private void writeRemappedClasses(LitemodRemapper remapper, FileSystem inputFileSystem, FileSystem outputFileSystem) {
 		Set<ClassStorage> storages = new LinkedHashSet<>(classes.size());
 
 		Profiler.push("read");
@@ -229,8 +230,8 @@ public class LiteMod {
 		Profiler.swap("otherFiles");
 		Path rootDir = jarFileSystem.getRootDirectories().iterator().next();
 		Map<String, String> otherFiles = new LinkedHashMap<>();
-		try {
-			Files.walk(rootDir).filter(path -> {
+		try (Stream<Path> stream = Files.walk(rootDir)) {
+			stream.filter(path -> {
 				if (path.getNameCount() == 0) return false;
 				String fileName = path.getFileName().toString();
 				return !(fileName.endsWith(".class") || fileName.endsWith(".java"));
@@ -246,8 +247,8 @@ public class LiteMod {
 		Profiler.swap("entrypoints");
 
 		List<String> entryPoints = new ArrayList<>();
-		try {
-			Files.walk(rootDir).filter(path -> {
+		try (Stream<Path> stream = Files.walk(rootDir)){
+			stream.filter(path -> {
 				if (path.getNameCount() == 0) return false;
 				String fileName = path.getFileName().toString();
 				return fileName.startsWith("LiteMod") && fileName.endsWith(".class");
@@ -263,8 +264,8 @@ public class LiteMod {
 		Profiler.swap("classes");
 
 		Set<String> classes = new LinkedHashSet<>();
-		try {
-			Files.walk(rootDir).filter(path -> {
+		try (Stream<Path> stream = Files.walk(rootDir)){
+			stream.filter(path -> {
 				if (path.getNameCount() == 0) return false;
 				String fileName = path.getFileName().toString();
 				return fileName.endsWith(".class");

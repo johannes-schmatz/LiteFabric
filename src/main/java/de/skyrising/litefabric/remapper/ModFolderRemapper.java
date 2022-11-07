@@ -49,7 +49,7 @@ public class ModFolderRemapper {
 	public static boolean remapModsFolder() {
 		Path modsFolder = FabricLoader.getInstance().getGameDir().resolve("mods");
 
-		if (!(Files.exists(modsFolder) && Files.isDirectory(modsFolder))) {
+		if (!Files.exists(modsFolder) || !Files.isDirectory(modsFolder)) {
 			return false; // don't force the user to have a mods folder
 		}
 

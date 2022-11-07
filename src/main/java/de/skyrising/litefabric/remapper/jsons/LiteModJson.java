@@ -22,8 +22,6 @@ public class LiteModJson {
     public final String revision;
     public final List<String> dependsOn;
     public final List<String> mixinConfigs;
-    //public String dynamicVersion;
-    //public String dynamicDisplayName;
 
     public LiteModJson(String name, String displayName, String description, String version, String author, String mcversion, String revision,
                        List<String> dependsOn, List<String> mixinConfigs) {

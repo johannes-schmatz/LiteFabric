@@ -28,7 +28,7 @@ import net.minecraft.text.Text;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import java.io.File;
+import java.nio.file.Path;
 import java.util.*;
 
 public class LiteFabric {
@@ -86,12 +86,14 @@ public class LiteFabric {
 		onResize();
 		input.load();
 
-		File configPath = FabricLoader.getInstance().getConfigDir().toFile();
+		Path configPath = FabricLoader.getInstance().getConfigDir();
 		for (FabricLitemodContainer mod : mods.values()) {
 			LiteMod instance = mod.init(configPath);
 
 			configManager.registerMod(instance);
 			configManager.initConfig(instance);
+
+			// set up the method handle callbacks
 			ListenerType.proposeAll(instance);
 		}
 

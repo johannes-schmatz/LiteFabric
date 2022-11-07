@@ -73,7 +73,7 @@ public class Profiler {
 		if (enabled) {
 			System.out.println("Profiler: current level: " + level);
 			for (ProfilerSection section : SECTIONS) {
-				System.out.println(" -> " + section);
+				System.out.println(section);
 			}
 		} else {
 			System.out.println("Profiler: disabled");
@@ -89,23 +89,15 @@ public class Profiler {
 }
 
 class ProfilerSection {
-	private static int longestNameLength = 0;
 	public final String name;
 	public final long timeNanos;
 	public ProfilerSection(String name, long start, long end) {
 		this.name = name;
 		this.timeNanos = end - start;
-
-		int length = name.length();
-		if (length > longestNameLength)
-			longestNameLength = length;
 	}
 
 	@Override
 	public String toString() {
-		StringBuilder pad = new StringBuilder();
-		for (int i = name.length(); i < longestNameLength + 1; i++)
-			pad.append((longestNameLength - i) % 2 == 1 ? " " : ".");
-		return "ProfilerSection: name: " + name.replaceAll(" ", "_") + pad + String.format(" took: %12.6fms", timeNanos / 1e6);
+		return String.format("ProfilerSection: %12.6fms %s", timeNanos / 1e6, name);
 	}
 }

@@ -1,5 +1,7 @@
 package de.skyrising.litefabric.common;
 
+import de.skyrising.litefabric.remapper.ModFolderRemapper;
+
 public class EntryPointType {
 	/**
 	 * A {@link EntryPointType} that indicates that it's class is a LiteMod entry point. (this also indicates that there's a mod)
@@ -11,7 +13,7 @@ public class EntryPointType {
 	 * {@link fi.dy.masa.malilib.gui.config.liteloader.RedirectingConfigPanel}, if you extract the
 	 * {@link fi.dy.masa.malilib.gui.config.liteloader.RedirectingConfigPanel#configScreenFactory} from it,
 	 * you can run that to open the screen for you.
-	 *
+	 * <p>
 	 * masa added a getter in recent versions
 	 */
 	@SuppressWarnings("JavadocReference")
@@ -21,7 +23,11 @@ public class EntryPointType {
 		return "litefabric" + separator + "generated" + separator + modId;
 	}
 	public static String getPreLaunchEntryPoint(String modId, char separator) {
-		return getGeneratedPackageName(modId.toLowerCase(), separator) + separator + "PreLaunch";
+		return getGeneratedPackageName(sanitizeModId(modId), separator) + separator + "PreLaunch";
+	}
+
+	private static String sanitizeModId(String modId) {
+		return modId.toLowerCase().replaceAll(" ", "_");
 	}
 
 	public static String getCollectorClassName() {

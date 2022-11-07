@@ -2,18 +2,24 @@ package de.skyrising.litefabric.remapper.util;
 
 import net.fabricmc.mapping.tree.*;
 import org.objectweb.asm.ClassReader;
+import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.commons.Remapper;
 import org.objectweb.asm.tree.AnnotationNode;
 import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.FieldNode;
 import org.objectweb.asm.tree.MethodNode;
+import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.extensibility.IRemapper;
 import org.spongepowered.asm.mixin.injection.struct.MemberInfo;
+import org.spongepowered.asm.util.Annotations;
+import org.spongepowered.asm.util.Bytecode;
 
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
 import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class LitemodRemapper extends Remapper implements IRemapper {
     private static final String SOURCE_NAMESPACE = "official";
@@ -37,48 +43,6 @@ public class LitemodRemapper extends Remapper implements IRemapper {
             classesReverse.put(targetName, clsName);
         }
     }
-
-    /*
-
-    Caused by: org.spongepowered.asm.mixin.injection.throwables.InjectionError: Critical injection failure: Callback method
-    onRunTick(Lorg/spongepowered/asm/mixin/injection/callback/CallbackInfo;)V in mixins.tweakeroo.json:MixinMinecraft from
-    mod tweakeroo failed injection check, (0/1) succeeded. Scanned 1 target(s). Using refmap mixins.tweakeroo.refmap.json
-
-    @Inject(method = {"runTick"}, slice = {
-    @Slice(from = @At(value = "INVOKE", target = "Lnet/minecraft/client/Minecraft;runTickKeyboard()V"))
-    },
-    at = {@At(value = "FIELD", target = "Lnet/minecraft/client/Minecraft;world:Lnet/minecraft/client/multiplayer/WorldClient;", ordinal = 0)})
-  private void onRunTick(CallbackInfo ci) {
-    MiscTweaks.onTick((class_1600)this);
-  }
-
-
-Caused by: org.spongepowered.asm.mixin.injection.throwables.InjectionError: Critical injection failure: Callback method onHandleRightClickPre(Lorg/spongepowered/asm/mixin/injection/callback/CallbackInfo;)V in mixins.litematica.json:MixinMinecraft from mod litematica failed injection check, (0/1) succeeded. Scanned 1 target(s). Using refmap mixins.litematica.refmap.json
-
-
-
-java.lang.RuntimeException: java.lang.ArithmeticException: / by zero
-	at de.skyrising.litefabric.runtime.LiteFabric.onInitCompleted(LiteFabric.java:111)
-	at net.minecraft.client.MinecraftClient.handler$zzn000$litefabric$onGameInitDone(MinecraftClient.java:4548)
-	at net.minecraft.client.MinecraftClient.initializeGame(MinecraftClient.java:515)
-	at net.minecraft.client.MinecraftClient.run(MinecraftClient.java:361)
-	at net.minecraft.client.main.Main.main(Main.java:109)
-	at net.fabricmc.loader.impl.game.minecraft.MinecraftGameProvider.launch(MinecraftGameProvider.java:461)
-	at net.fabricmc.loader.impl.launch.knot.Knot.launch(Knot.java:74)
-	at net.fabricmc.loader.launch.knot.KnotClient.main(KnotClient.java:28)
-Caused by: java.lang.ArithmeticException: / by zero
-	at net.minecraft.client.texture.TextureUtil.method_7022(TextureUtil.java:149)
-	at net.minecraft.client.texture.TextureUtil.method_5861(TextureUtil.java:48) // third parameter of this function is 0
-	at com.mamiyaotaru.voxelmap.c.h.if(Unknown Source)
-	at com.mamiyaotaru.voxelmap.u.do(Unknown Source)
-	at com.mamiyaotaru.voxelmap.t.reload(Unknown Source)
-	at net.minecraft.resource.ReloadableResourceManagerImpl.registerListener(ReloadableResourceManagerImpl.java:99)
-	at com.mamiyaotaru.voxelmap.t.do(Unknown Source)
-	at com.mamiyaotaru.voxelmap.litemod.LiteModVoxelMap.onInitCompleted(Unknown Source)
-	at de.skyrising.litefabric.runtime.LiteFabric.onInitCompleted(LiteFabric.java:109)
-	... 7 more
-
-     */
 
     // this method gets called on each class **before** any remapping is done
     public Set<String> addClass(ClassNode node) {
@@ -405,12 +369,16 @@ Caused by: java.lang.ArithmeticException: / by zero
         int oldLength = old.length();
         StringBuilder builder = new StringBuilder(oldLength + oldLength / 4);
         while (lastL >= 0) {
-            if (lastSemi + 1 < lastL) builder.append(old, lastSemi + 1, lastL);
+            // copy over the non mapped stuff
+            if (lastSemi + 1 < lastL) {
+                builder.append(old, lastSemi + 1, lastL);
+            }
 
             lastSemi = old.indexOf(';', lastL + 1);
             if (lastSemi == -1) return old;
 
             builder.append('L').append(map(old.substring(lastL + 1, lastSemi))).append(';');
+
             lastL = old.indexOf('L', lastSemi + 1);
         }
 
@@ -471,7 +439,7 @@ Caused by: java.lang.ArithmeticException: / by zero
                     if (parenthesisPosition == -1) {
                         desc = "";
                     } else {
-                        // if there's no ':', then there must be a '(' or **the desc is null**
+                        // if there's no ':', then there must be an opening bracket or **the desc is null**
                         desc = rest.substring(parenthesisPosition);
                         rest = rest.substring(0, parenthesisPosition);
                     }

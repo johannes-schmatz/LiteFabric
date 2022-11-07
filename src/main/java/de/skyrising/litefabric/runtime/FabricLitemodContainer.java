@@ -31,20 +31,30 @@ public class FabricLitemodContainer {
 		return dynamicVersion;
 	}
 
-	public LiteMod init(File configPath) {
-		for (String className: this.entryPoints.getOrDefault(EntryPointType.LITEMOD, new HashSet<>())) {
+	public LiteMod getInstance() {
+		return instance;
+	}
+
+	public LiteMod init(Path configPath) {
+		File configPathFile = configPath.toFile();
+		Set<String> classes = entryPoints.get(EntryPointType.LITEMOD);
+
+		if (classes == null) return null;
+
+		for (String className: classes) {
 			try {
 				@SuppressWarnings("unchecked")
 				Class<? extends LiteMod> modClass = (Class<? extends LiteMod>) FabricLauncherBase.getClass(className);
+
 				LiteMod mod = modClass.newInstance();
-				mod.init(configPath);
+				mod.init(configPathFile);
 				try {
-					this.dynamicDisplayName = mod.getName();
+					dynamicDisplayName = mod.getName();
 				} catch (Throwable ignored) {}
 				try {
-					this.dynamicVersion = mod.getVersion();
+					dynamicVersion = mod.getVersion();
 				} catch (Throwable ignored) {}
-				this.instance = mod;
+				instance = mod;
 				return mod;
 			} catch (ClassNotFoundException | InstantiationException | IllegalAccessException e) {
 				throw new RuntimeException("Failed to initialize LiteMod " + this.modId, e);

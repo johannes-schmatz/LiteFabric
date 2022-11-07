@@ -52,12 +52,15 @@ public abstract class PluginChannels<T extends CommonPluginChannelListener> {
         }
     }
 
+    @SuppressWarnings("BooleanMethodIsAlwaysInverted")
     protected static boolean isValidChannelName(String channel) {
-        if (channel == null) return false;
-        int len = channel.length();
-        if (len == 0 || len > 20) return false;
-        if (channel.equalsIgnoreCase("REGISTER")) return false;
-        return !channel.equalsIgnoreCase("UNREGISTER");
+        return
+                channel != null &&
+                channel.length() != 0 &&
+                channel.length() <= 20 &&
+                !"REGISTER".equalsIgnoreCase(channel) &&
+                !"UNREGISTER".equalsIgnoreCase(channel)
+        ;
     }
 
     public enum ChannelPolicy {

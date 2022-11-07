@@ -17,15 +17,10 @@ public class EntryPointCollector {
 			throw new RuntimeException("Can't add entry points when the collector is finished.");
 		}
 
-		Map<String, Set<String>> map = entryPoints.getOrDefault(mod, new HashMap<>());
-
-		Set<String> set = map.getOrDefault(type, new HashSet<>());
-
-		set.add(clazz);
-
-		map.put(type, set);
-
-		entryPoints.put(mod, map);
+		entryPoints
+				.computeIfAbsent(mod, key -> new HashMap<>())
+				.computeIfAbsent(type, key -> new HashSet<>())
+				.add(clazz);
 
 		LOGGER.debug("Added LiteFabric EntryPoint: modId: " + mod + ", type: " + type + ", class: " + clazz);
 	}

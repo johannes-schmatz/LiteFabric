@@ -55,7 +55,10 @@ public class ListenerType<T> {
 
 	@SuppressWarnings("unchecked")
 	void propose(LiteMod listener) {
-		if (cls.isInstance(listener)) addListener((T) listener);
+		// check if the LiteMod implements the listener
+		if (cls.isInstance(listener)) {
+			addListener((T) listener);
+		}
 	}
 
 	// consider cleaning this up to one bigger function...
