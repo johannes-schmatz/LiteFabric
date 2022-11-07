@@ -4,7 +4,7 @@ import com.mojang.authlib.GameProfileRepository;
 import com.mojang.authlib.minecraft.MinecraftSessionService;
 import com.mojang.authlib.yggdrasil.YggdrasilAuthenticationService;
 import de.skyrising.litefabric.runtime.LiteFabric;
-import net.minecraft.class_2934;
+import net.minecraft.datafixer.class_2934;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.util.UserCache;
 import org.spongepowered.asm.mixin.Mixin;

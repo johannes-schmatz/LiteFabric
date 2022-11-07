@@ -16,7 +16,7 @@ import java.util.List;
 
 @Mixin(MinecraftClient.class)
 public class MinecraftClientMixin {
-    @Shadow @Final private ClientTickTracker tricker;
+    @Shadow @Final private ClientTickTracker ticker;
     @Shadow private boolean paused;
     @Shadow private float field_15871;
 
@@ -37,8 +37,8 @@ public class MinecraftClientMixin {
     @Inject(method = "runGameLoop", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/render/GameRenderer;render(FJ)V", shift = At.Shift.AFTER))
     private void litefabric$onClientTick(CallbackInfo ci) {
         profiler.push("litefabric");
-        boolean clock = tricker.ticksThisFrame > 0;
-        float partialTicks = paused ? field_15871 : tricker.tickDelta;
+        boolean clock = ticker.ticksThisFrame > 0;
+        float partialTicks = paused ? field_15871 : ticker.tickDelta;
         LiteFabric.getInstance().onTick((MinecraftClient) (Object) this, clock, partialTicks);
         profiler.pop();
     }
@@ -48,7 +48,7 @@ public class MinecraftClientMixin {
         LiteFabric.getInstance().addResourcePacks(resourcePacks);
     }
 
-    @Inject(method = "method_2923", at = @At("HEAD"))
+    @Inject(method = "onResolutionChanged", at = @At("HEAD"))
     private void litefabric$onResize(CallbackInfo ci) {
         profiler.push("litefabric");
         LiteFabric.getInstance().onResize();
