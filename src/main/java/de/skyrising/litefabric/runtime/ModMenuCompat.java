@@ -1,8 +1,9 @@
 package de.skyrising.litefabric.runtime;
 
-import io.github.prospector.modmenu.api.ConfigScreenFactory;
-import io.github.prospector.modmenu.api.Mod;
-import io.github.prospector.modmenu.api.ModMenuApi;
+import com.enderzombie102.modmenu.api.Badge;
+import com.enderzombie102.modmenu.api.ConfigScreenFactory;
+import com.enderzombie102.modmenu.api.ModMenuApi;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
@@ -16,8 +17,13 @@ public class ModMenuCompat implements ModMenuApi {
         return factories;
     }
 
+    @Override
+    public void onSetupBadges() {
+        Badge.register("modmenu.badge.liteloader", 0xff70531f, 0xff47391e, "liteloader");
+    }
+
     static {
-        Mod.Badge.register("modmenu.badge.liteloader", 0xff70531f, 0xff47391e, "liteloader");
+        // register the badge only for enders port
         // T_ODO: add registering mod menu badge, once the ported version of modmenu from Legacy ender is used
         //  see https://discord.com/channels/679635419045822474/915114155298676807/1018279263033626685
     }

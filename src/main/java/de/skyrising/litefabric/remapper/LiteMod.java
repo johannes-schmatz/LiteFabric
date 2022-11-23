@@ -188,9 +188,10 @@ public class LiteMod {
 				preLaunchClassBuilder.addEntryPoint(EntryPointType.MALILIB_REDIRECTING_CONFIG_PANEL, storage.remapped.name);
 			}
 
-			//if (isConfigGuiCandidate(remapped))
-			//	System.out.println("config gui candidate! " + remapped.name);
-			//	mod.configGuiCandidates.add(remapped.name);
+			if (isConfigGuiCandidate(storage.remapped)) {
+				System.out.println("config gui candidate! " + storage.remapped.name);
+				preLaunchClassBuilder.addEntryPoint(EntryPointType.CONFIG_GUIS, storage.remapped.name);
+			}
 		}
 		Profiler.swap("write");
 		for (ClassStorage storage: storages) {
@@ -208,7 +209,8 @@ public class LiteMod {
 	private static final Set<String> CONFIG_GUI_SUPER_CLASSES = new HashSet<>(Arrays.asList(
 			"fi/dy/masa/malilib/gui/GuiConfigsBase",
 			"fi/dy/masa/malilib/gui/config/BaseConfigScreen",
-			"net/minecraft/client/gui/screen/Screen"
+			"net/minecraft/client/gui/screen/Screen",
+			"net/minecraft/class_388"
 	));
 
 	public static LiteMod load(Path jarPath) {

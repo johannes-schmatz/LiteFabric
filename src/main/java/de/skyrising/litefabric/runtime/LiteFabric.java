@@ -44,12 +44,13 @@ public class LiteFabric {
 	public void addResourcePacks(List<ResourcePack> resourcePacks) {
 		addMods();
 
-		for (String modId: mods.keySet()) { // TODO: handle litemods that don't have resources?
-			Optional<ModContainer> container = FabricLoader.getInstance().getModContainer(modId);
+		for (ModContainer container : FabricLoader.getInstance().getAllMods()) {
+			String modId = container.getMetadata().getId();
 
-			container.ifPresent(modContainer ->
-				resourcePacks.add(new ModResourcePack(modId, modContainer))
-			);
+			// java doesn't have resources, mcs are already added
+			if ("java".equals(modId) || "minecraft".equals(modId)) continue;
+
+			resourcePacks.add(new ModResourcePack(modId, container));
 		}
 	}
 
@@ -60,6 +61,7 @@ public class LiteFabric {
 		LOGGER.debug("Finishing collecting all LiteMod entry points.");
 
 		Map<String, Map<String, Set<String>>> entryPoints = EntryPointCollector.finish();
+
 		for (Map.Entry<String, Map<String, Set<String>>> mod: entryPoints.entrySet()) {
 			String modId = mod.getKey();
 			FabricLitemodContainer modContainer = new FabricLitemodContainer(modId, mod.getValue());
@@ -73,7 +75,11 @@ public class LiteFabric {
 	}
 
 	public static Version getMinecraftVersion() {
-		return FabricLoader.getInstance().getModContainer("minecraft").orElseThrow(IllegalStateException::new).getMetadata().getVersion();
+		return FabricLoader.getInstance()
+				.getModContainer("minecraft")
+				.orElseThrow(IllegalStateException::new)
+				.getMetadata()
+				.getVersion();
 	}
 
 	public Collection<FabricLitemodContainer> getMods(){
@@ -233,15 +239,6 @@ public class LiteFabric {
 		}
 
 		Window window = new Window(client);
-		/*try {
-		// TODO: cleanup
-			if (fullscreenChanged) {
-				ListenerType.MH_FULLSCREEN_TOGGLED.invokeExact(fullscreen);
-			}
-			ListenerType.MH_VIEWPORT_RESIZED.invokeExact(window, client.width, client.height);
-		} catch (Throwable e) {
-			throw new RuntimeException(e);
-		}*/
 		if (fullscreenChanged) {
 			ListenerType.invoke(ListenerType.MH_FULLSCREEN_TOGGLED, fullscreen);
 		}

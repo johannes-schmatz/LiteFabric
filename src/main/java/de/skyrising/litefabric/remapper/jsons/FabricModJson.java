@@ -58,6 +58,18 @@ public class FabricModJson {
 
 	public static FabricModJson from(LiteModJson liteModJson, @Nullable McmodInfo mcmodInfoJson) {
 		String id = liteModJson.name.toLowerCase().replaceAll(" ", "_");
+		String version = liteModJson.version;
+
+		// convert Carpet.Client-v1.4c to be version 1.4.3
+		if (version.startsWith("v")) {
+			version = version.substring(1);
+			int len = version.length();
+			char lastChar = version.charAt(len - 1);
+			if ('a' <= lastChar && lastChar <= 'z') {
+				version = version.substring(0, len - 1) + "." + (lastChar - 'a' + 1);
+			}
+		}
+
 		String description;
 		List<String> authors;
 		HashMap<String, String> contact = new HashMap<>();
@@ -111,7 +123,7 @@ public class FabricModJson {
 
 		return new FabricModJson(
 				id,
-				liteModJson.version,
+				version,
 				displayName,
 				description,
 				authors,

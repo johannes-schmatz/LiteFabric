@@ -19,16 +19,9 @@ public class PreLaunchClassBuilder {
 	}
 
 	public void addEntryPoint(String type, String clazz) {
-		Set<String> set = this.entryPoints.get(type);
-
-		if (set == null) {
-			Set<String> newSet = new HashSet<>();
-			newSet.add(clazz);
-			this.entryPoints.put(type, newSet);
-		} else {
-			set.add(clazz);
-			this.entryPoints.put(type, set);
-		}
+		entryPoints
+				.computeIfAbsent(type, key -> new HashSet<>())
+				.add(clazz.replace('/', '.'));
 	}
 
 	public byte[] build() {

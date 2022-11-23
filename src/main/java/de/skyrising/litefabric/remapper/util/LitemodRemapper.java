@@ -160,8 +160,8 @@ public class LitemodRemapper extends Remapper implements IRemapper {
                     throw new RuntimeException("Didn't find any targets in class " + node.name + ": " + classAnnotation.values);
                 }
 
-                // TODO: refactor it to use lists/sets here, shouldn't matter, it could be that there are mixins that specify
-                //  two classes, but have methods that are not in the first one/second one
+                //TODO: refactor it to use lists/sets here, shouldn't matter, it could be that there are mixins that
+                // specify two classes, but have methods that are not in the first one/second one
                 this.mixinAnnotationSuperClasses.put(node.name, targets.get(0));
             }
         }
