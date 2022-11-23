@@ -1,12 +1,16 @@
 package de.skyrising.litefabric.runtime;
 
 import de.skyrising.litefabric.common.EntryPointType;
+import de.skyrising.litefabric.liteloader.Configurable;
 import de.skyrising.litefabric.liteloader.LiteMod;
 import de.skyrising.litefabric.liteloader.modconfig.ConfigPanel;
+import de.skyrising.litefabric.runtime.modconfig.ConfigPanelScreen;
+
 import net.fabricmc.loader.impl.launch.FabricLauncherBase;
 import net.minecraft.client.gui.screen.Screen;
 
 import java.io.*;
+import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -66,20 +70,17 @@ public class FabricLitemodContainer {
 	}
 
 	public Screen getConfigScreen(Screen parent) {
-		// TODO: voxelmap: this.instance instanceof Configurable, then cast, then get the panel class...
-
 		Set<String> configPanelClasses = this.entryPoints.get(EntryPointType.MALILIB_REDIRECTING_CONFIG_PANEL);
 
 		if (configPanelClasses == null)
-			return null;
+			return getConfigScreenNonMalilib(parent);
 
 		if (configPanelClasses.size() != 1)
 			throw new RuntimeException(configPanelClasses.toString());
 
 		for (String className: configPanelClasses) {
+			ClassLoader loader = FabricLitemodContainer.class.getClassLoader();
 			try {
-				ClassLoader loader = FabricLitemodContainer.class.getClassLoader();
-
 				Class<?> panelClass = loader.loadClass(className.replace('/', '.'));
 				Class<?> fieldClass = loader.loadClass("fi.dy.masa.malilib.gui.config.liteloader.RedirectingConfigPanel");
 
@@ -112,6 +113,54 @@ public class FabricLitemodContainer {
 					 InvocationTargetException | NoSuchMethodException e) {
 				e.printStackTrace();
 				//throw new RuntimeException(e); // TODO: for now ignore it, as masa didn't release new versions yet
+			}
+		}
+
+		return null;
+	}
+
+	private Screen getConfigScreenNonMalilib(Screen parent) {
+		// try the "normal" LiteLoader configs
+		if (instance instanceof Configurable) {
+			Configurable configurable = (Configurable) instance;
+			Class<? extends ConfigPanel> cls = configurable.getConfigPanelClass();
+			if (cls != null) {
+				try {
+					Constructor<? extends ConfigPanel> panelConstructor = cls.getConstructor();
+					ConfigPanel panel = panelConstructor.newInstance();
+					return new ConfigPanelScreen(parent, instance, panel);
+				} catch (ReflectiveOperationException e) {
+					throw new RuntimeException(e);
+				}
+			}
+		}
+
+		// we handle voxelmap here, because it's special, and we want it
+		if ("voxelmap".equals(modId)) {
+			ClassLoader loader = FabricLitemodContainer.class.getClassLoader();
+			try {
+				// get the IVoxelMap, yes it's a singleton
+				Class<?> abstractVoxelMapClass = loader.loadClass("com.mamiyaotaru.voxelmap.interfaces.AbstractVoxelMap");
+				Method getInstance = abstractVoxelMapClass.getDeclaredMethod("getInstance");
+				Object iVoxelMap = getInstance.invoke(null);
+
+				// the class that is actually the config screen
+				@SuppressWarnings("unchecked")
+				Class<? extends Screen> configScreenClass = (Class<? extends Screen>)
+						loader.loadClass("com.mamiyaotaru.voxelmap.a.f");
+
+				// the IVoxelMap passed to the config screen constructor
+				Class<?> iVoxelMapClass = loader.loadClass("com.mamiyaotaru.voxelmap.interfaces.IVoxelMap");
+
+				// get the constructor
+				Constructor<? extends Screen> configScreenConstructor =
+						configScreenClass.getDeclaredConstructor(Screen.class, iVoxelMapClass);
+
+				// create the config screen
+				return configScreenConstructor.newInstance(parent, iVoxelMap);
+			} catch (ClassNotFoundException | NoSuchMethodException | InvocationTargetException |
+					IllegalAccessException | InstantiationException e) {
+				throw new RuntimeException("Make sure you have voxelmap version 1.7.1!", e);
 			}
 		}
 

@@ -1,13 +1,12 @@
 package de.skyrising.litefabric.runtime.modconfig;
 
 import com.mojang.blaze3d.platform.GlStateManager;
-import de.skyrising.litefabric.liteloader.Configurable;
+
+import net.minecraft.client.gui.screen.Screen;
+
 import de.skyrising.litefabric.liteloader.LiteMod;
 import de.skyrising.litefabric.liteloader.modconfig.ConfigPanel;
 import de.skyrising.litefabric.liteloader.modconfig.ConfigPanelHost;
-import net.minecraft.client.gui.screen.Screen;
-
-import java.lang.reflect.Constructor;
 
 public class ConfigPanelScreen extends Screen implements ConfigPanelHost {
     private static final int MARGIN_LEFT = 40;
@@ -19,18 +18,11 @@ public class ConfigPanelScreen extends Screen implements ConfigPanelHost {
     private final ConfigPanel panel;
     protected String title;
 
-    public ConfigPanelScreen(Screen parent, LiteMod mod) {
+    public ConfigPanelScreen(Screen parent, LiteMod mod, ConfigPanel panel) {
         this.parent = parent;
         this.mod = mod;
         this.title = mod.getName();
-        if (!(mod instanceof Configurable)) throw new IllegalArgumentException(mod.getName() + " is not Configurable");
-        try {
-            Class<? extends ConfigPanel> panelClass = ((Configurable) mod).getConfigPanelClass();
-            Constructor<? extends ConfigPanel> panelConstructor = panelClass.getConstructor();
-            this.panel = panelConstructor.newInstance();
-        } catch (ReflectiveOperationException e) {
-            throw new RuntimeException(e);
-        }
+        this.panel = panel;
     }
 
     @Override
