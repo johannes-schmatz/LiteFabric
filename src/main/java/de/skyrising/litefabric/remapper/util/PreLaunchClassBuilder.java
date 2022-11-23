@@ -34,21 +34,47 @@ public class PreLaunchClassBuilder {
 	public byte[] build() {
 		// create a java 8 class extending PreLaunchEntrypoint
 		ClassWriter writer = new ClassWriter(ClassWriter.COMPUTE_FRAMES);
-		writer.visit(V1_8, ACC_PUBLIC | ACC_SUPER, className, null, Type.getInternalName(Object.class), new String[]{"net/fabricmc/loader/api/entrypoint/PreLaunchEntrypoint"});
+		writer.visit(
+				V1_8,
+				ACC_PUBLIC | ACC_SUPER,
+				className,
+				null,
+				Type.getInternalName(Object.class),
+				new String[]{"net/fabricmc/loader/api/entrypoint/PreLaunchEntrypoint"}
+		);
 
 		// create the constructor that just calls Object's new
-		MethodVisitor init = writer.visitMethod(ACC_PUBLIC, "<init>", Type.getMethodDescriptor(Type.VOID_TYPE), null, null);
+		MethodVisitor init = writer.visitMethod(
+				ACC_PUBLIC,
+				"<init>",
+				Type.getMethodDescriptor(Type.VOID_TYPE),
+				null,
+				null
+		);
 		init.visitCode();
 
 		init.visitVarInsn(ALOAD, 0);
-		init.visitMethodInsn(INVOKESPECIAL, Type.getInternalName(Object.class), "<init>", Type.getMethodDescriptor(Type.VOID_TYPE), false);
+		init.visitMethodInsn(
+				INVOKESPECIAL,
+				Type.getInternalName(Object.class),
+				"<init>",
+				Type.getMethodDescriptor(Type.VOID_TYPE),
+				false
+		);
 
 		init.visitInsn(RETURN);
 		init.visitMaxs(1, 1);
 		init.visitEnd();
 
-		// create the function from the interface
-		MethodVisitor onPreLaunch = writer.visitMethod(ACC_PUBLIC, "onPreLaunch", Type.getMethodDescriptor(Type.VOID_TYPE), null, null);
+		// create the method from the interface
+		MethodVisitor onPreLaunch = writer.visitMethod(
+				ACC_PUBLIC,
+				"onPreLaunch",
+				Type.getMethodDescriptor(Type.VOID_TYPE),
+				null,
+				null
+		);
+
 		onPreLaunch.visitCode();
 
 		buildEntryPoints(onPreLaunch);

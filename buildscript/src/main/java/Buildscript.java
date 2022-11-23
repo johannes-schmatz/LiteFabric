@@ -12,8 +12,11 @@ import io.github.coolcrabs.brachyura.project.Task;
 import net.fabricmc.mappingio.tree.MappingTree;
 
 import java.nio.file.Path;
-import java.text.SimpleDateFormat;
-import java.util.*;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Objects;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
@@ -52,26 +55,6 @@ public class Buildscript extends SimpleFabricProject {
 				FabricContext.ModDependencyFlag.COMPILE,
 				FabricContext.ModDependencyFlag.RUNTIME
 		);
-		/*d.addMaven(
-				"https://repsy.io/mvn/enderzombi102/mc/",
-				new MavenId(
-						"com.enderzombi102",
-						"modmenu-legacy",
-						"1.17.1+1.12.2"
-				),
-				FabricContext.ModDependencyFlag.COMPILE,
-				FabricContext.ModDependencyFlag.RUNTIME
-		);*/
-		/*d.addMaven(
-				"https://maven.legacyfabric.net/",
-				new MavenId(
-						"net.legacyfabric.legacy-fabric-api",
-						"legacy-fabric-api",
-						"1.8.0+1.12.2"
-				),
-				FabricContext.ModDependencyFlag.COMPILE,
-				FabricContext.ModDependencyFlag.RUNTIME
-		);*/
 	}
 
 	@Override
@@ -122,8 +105,8 @@ public class Buildscript extends SimpleFabricProject {
 		runTask("runMinecraftClient");
 	}
 
-	public static final SimpleDateFormat DEV_VERSION_FORMAT = new SimpleDateFormat(".yyyyMMdd.HHmmss");
-	private Date buildDate = null; // to save the build date for the version
+	public static final DateTimeFormatter DEV_VERSION_FORMATTER = DateTimeFormatter.ofPattern(".yyyyMMdd.HHmmss");
+	private LocalDateTime buildDate = null; // to save the build date for the version
 
 	@Override
 	public String getVersion(){
@@ -132,20 +115,16 @@ public class Buildscript extends SimpleFabricProject {
 		// append the build date when it's the dev version
 		if(version.endsWith("-dev")){
 			Objects.requireNonNull(buildDate, "build date not set");
-			version += DEV_VERSION_FORMAT.format(buildDate);
+			version += buildDate.format(DEV_VERSION_FORMATTER);
 		}
 
 		return version;
 	}
 
-	static {
-		DEV_VERSION_FORMAT.setTimeZone(TimeZone.getTimeZone("UTC"));
-	}
-
 	@Override
 	public JavaJarDependency build() {
 		// we want to know from when the build is
-		this.buildDate = new Date();
+		this.buildDate = LocalDateTime.now();
 
 		// where the output jars are
 		Path outJar = getBuildLibsDir().resolve(getModId() + "-" + getVersion() + ".jar");
@@ -153,7 +132,7 @@ public class Buildscript extends SimpleFabricProject {
 
 		try (
 			// create the output sinks
-			AtomicZipProcessingSink jarSink = new AtomicZipProcessingSink(outJar);
+			AtomicZipProcessingSink jarSink = new AtomicZipProcessingSink(outJar)//;
 			//AtomicZipProcessingSink jarSourcesSink = new AtomicZipProcessingSink(outJarSources)
 		) {
 			// make sure all dependencies are loaded

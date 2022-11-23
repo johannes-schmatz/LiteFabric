@@ -29,7 +29,8 @@ public class McmodInfo {
     public final String credits;
     public final String logoFile;
 
-    public McmodInfo(String id, String name, String description, String version, String mcVersion, String url, String updateUrl, List<String> authors, String credits, String logoFile) {
+    public McmodInfo(String id, String name, String description, String version, String mcVersion, String url,
+            String updateUrl, List<String> authors, String credits, String logoFile) {
         this.id = id;
         this.name = name;
         this.description = description;
@@ -52,9 +53,13 @@ public class McmodInfo {
 
         if (Files.exists(mcmodInfo)) {
             try {
-                List<McmodInfo> mcmodInfos = new Gson().fromJson(Files.newBufferedReader(mcmodInfo, StandardCharsets.UTF_8), new TypeToken<List<McmodInfo>>(){}.getType());
+                List<McmodInfo> mcmodInfos = new Gson().fromJson(
+                        Files.newBufferedReader(mcmodInfo, StandardCharsets.UTF_8),
+                        new TypeToken<List<McmodInfo>>(){}.getType()
+                );
 
-                // actually we should return a Map<String, McmodInfo> (modId to McmodInfo), but so far all LiteMods contain only one mcmod.info entry.
+                // actually we should return a Map<String, McmodInfo> (modId to McmodInfo), but so far all LiteMods
+                // contain only one mcmod.info entry.
                 // map.put(info.id, info)
                 if (mcmodInfos.size() != 1) {
                     throw new RuntimeException("Expected mcmod.info in " + jarPath + " to only contain one entry, found " + mcmodInfos.size() + " instead.");

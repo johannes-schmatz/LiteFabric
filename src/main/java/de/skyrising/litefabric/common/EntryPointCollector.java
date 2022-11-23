@@ -10,7 +10,7 @@ import java.util.Set;
 
 public class EntryPointCollector {
 	private static final Logger LOGGER = LogManager.getLogger("LiteFabric|EntryPointCollector");
-	private final static Map<String, Map<String, Set<String>>> entryPoints = new HashMap<>();
+	private static final Map<String, Map<String, Set<String>>> entryPoints = new HashMap<>();
 	private static boolean finished = false;
 	public static void addEntryPoint(String mod, String type, String clazz) {
 		if (finished) {

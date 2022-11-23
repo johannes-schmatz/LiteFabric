@@ -8,7 +8,7 @@ import java.util.*;
 
 public class ModMenuCompat implements ModMenuApi {
     @Override
-    public Map<String, ConfigScreenFactory<?>> getProvidedConfigScreenFactories() {
+    public @NotNull Map<String, ConfigScreenFactory<?>> getProvidedConfigScreenFactories() {
         Map<String, ConfigScreenFactory<?>> factories = new HashMap<>();
         for (FabricLitemodContainer mod: LiteFabric.getInstance().getMods()) {
             factories.put(mod.modId, mod::getConfigScreen);

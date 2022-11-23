@@ -29,7 +29,9 @@ public class FabricModJson {
 	public final Map<String, String> depends;
 	public final Map<String, Map<String, List<String>>> custom;
 
-	public FabricModJson(String id, String version, String name, String description, List<String> authors, Map<String, String> contact, String icon, Map<String, List<String>> entrypoints, List<String> mixins, Map<String, String> depends, Map<String, Map<String, List<String>>> custom) {
+	public FabricModJson(String id, String version, String name, String description, List<String> authors,
+			Map<String, String> contact, String icon, Map<String, List<String>> entrypoints, List<String> mixins,
+			Map<String, String> depends, Map<String, Map<String, List<String>>> custom) {
 		this.id = id;
 		this.version = version;
 		this.name = name;

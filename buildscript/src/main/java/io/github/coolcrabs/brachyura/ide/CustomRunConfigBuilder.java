@@ -31,8 +31,16 @@ public class CustomRunConfigBuilder extends IdeModule.RunConfigBuilder {
 		Class<IdeModule.RunConfig> cls = IdeModule.RunConfig.class;
 		Constructor<?> constructor = cls.getDeclaredConstructors()[0];
 		try {
-			return (IdeModule.RunConfig) constructor.newInstance(project, name, mainClass, cwd, vmArgs, args, classpath, additionalModulesClasspath,
-					resourcePaths);
+			return (IdeModule.RunConfig) constructor.newInstance(project,
+					name,
+					mainClass,
+					cwd,
+					vmArgs,
+					args,
+					classpath,
+					additionalModulesClasspath,
+					resourcePaths
+			);
 			//return project.new RunConfig(name, mainClass, cwd, vmArgs, args, classpath, additionalModulesClasspath, resourcePaths);
 		} catch (InvocationTargetException | InstantiationException | IllegalAccessException e) {
 			throw new RuntimeException(e);

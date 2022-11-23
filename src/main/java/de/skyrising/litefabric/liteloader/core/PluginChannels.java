@@ -56,7 +56,7 @@ public abstract class PluginChannels<T extends CommonPluginChannelListener> {
     protected static boolean isValidChannelName(String channel) {
         return
                 channel != null &&
-                channel.length() != 0 &&
+                !channel.isEmpty() &&
                 channel.length() <= 20 &&
                 !"REGISTER".equalsIgnoreCase(channel) &&
                 !"UNREGISTER".equalsIgnoreCase(channel)

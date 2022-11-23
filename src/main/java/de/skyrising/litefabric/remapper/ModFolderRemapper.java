@@ -76,7 +76,7 @@ public class ModFolderRemapper {
 			throw new RuntimeException(e);
 		}
 
-		if (liteMods.size() == 0)
+		if (liteMods.isEmpty())
 			return false; // if there are no litemods, continue
 
 		Profiler.swap("findNeededRemapping");
@@ -93,7 +93,7 @@ public class ModFolderRemapper {
 			}
 		});
 
-		if (liteModsToRemap.size() == 0)
+		if (liteModsToRemap.isEmpty())
 			return false; // if there are not litemods to remap, continue
 
 		Profiler.swap("preRemap");

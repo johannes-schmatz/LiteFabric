@@ -24,8 +24,9 @@ public class RefmapJson {
 		this.data = data;
 	}
 
-	public static Map<Path, RefmapJson> load(FileSystem jarFileSystem, Path jarPath, Map<MixinsJson, Path> mixinConfigs, Map<String, String> otherFiles) {
-		if (mixinConfigs.size() == 0) {
+	public static Map<Path, RefmapJson> load(FileSystem jarFileSystem, Path jarPath, Map<MixinsJson, Path> mixinConfigs,
+			Map<String, String> otherFiles) {
+		if (mixinConfigs.isEmpty()) {
 			return Collections.emptyMap();
 		}
 

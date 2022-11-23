@@ -14,7 +14,8 @@ public class ListenerHandle<T> {
     private final List<MethodHandle> listeners = new ArrayList<>();
     private boolean initialized;
 
-    public ListenerHandle(Class<T> type, String name, MethodType methodType) throws NoSuchMethodException, IllegalAccessException {
+    public ListenerHandle(Class<T> type, String name, MethodType methodType) throws NoSuchMethodException,
+            IllegalAccessException {
         unbound = LOOKUP.findVirtual(type, name, methodType);
         callSite = new MutableCallSite(MoreMethodHandles.empty(methodType));
     }

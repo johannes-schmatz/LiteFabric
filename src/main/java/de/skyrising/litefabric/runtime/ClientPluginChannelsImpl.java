@@ -33,7 +33,7 @@ public class ClientPluginChannelsImpl extends ClientPluginChannels {
     }
 
     public void addListener(PluginChannelListener listener) {
-        super.addPluginChannelListener(listener);
+        addPluginChannelListener(listener);
     }
 
     @Override
@@ -42,7 +42,7 @@ public class ClientPluginChannelsImpl extends ClientPluginChannels {
         String channel = customPayload.getChannel();
         if (channel == null) return;
         PacketByteBuf data = customPayload.getPayload();
-        if (channel.equals("REGISTER")) {
+        if ("REGISTER".equals(channel)) {
             onRegisterPacketReceived(data);
         } else if (pluginChannels.containsKey(channel)) {
             for (PluginChannelListener listener : pluginChannels.get(channel)) {

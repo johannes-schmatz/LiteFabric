@@ -4,7 +4,8 @@ import de.skyrising.litefabric.remapper.ModFolderRemapper;
 
 public class EntryPointType {
 	/**
-	 * A {@link EntryPointType} that indicates that it's class is a LiteMod entry point. (this also indicates that there's a mod)
+	 * A {@link EntryPointType} that indicates that it's class is a LiteMod entry point.
+	 * (this also indicates that there's a mod)
 	 */
 	public static final String LITEMOD = "LITEMOD";
 	public static final String CONFIG_GUIS = "CONFIG_GUIS";

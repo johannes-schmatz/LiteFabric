@@ -156,7 +156,7 @@ public class LitemodRemapper extends Remapper implements IRemapper {
                         targets.addAll(annotationValue);
                     }
                 }
-                if (targets.size() == 0) {
+                if (targets.isEmpty()) {
                     throw new RuntimeException("Didn't find any targets in class " + node.name + ": " + classAnnotation.values);
                 }
 
@@ -595,7 +595,7 @@ public class LitemodRemapper extends Remapper implements IRemapper {
         }
 
         String mappedMethod;
-        if (names.size() == 0) {
+        if (names.isEmpty()) {
             mappedMethod = method;
         } else if (names.size() == 1) {
             mappedMethod = names.iterator().next();

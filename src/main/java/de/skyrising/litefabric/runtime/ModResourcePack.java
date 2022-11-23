@@ -62,7 +62,8 @@ public class ModResourcePack extends ZipResourcePack implements ResourcePack {
 
 			Calling this here makes the ZipFile no longer null, fixing this crash.
 		 */
-		super.containsFile("");
+		if ("voxelmap".equals(modId))
+			containsFile("");
 	}
 
 	@Override

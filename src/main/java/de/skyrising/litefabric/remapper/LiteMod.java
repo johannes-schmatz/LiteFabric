@@ -30,8 +30,8 @@ public class LiteMod {
 	public final FileSystemDelegate jarFileSystemDelegate;
 	private final PreLaunchClassBuilder preLaunchClassBuilder;
 
-	public LiteMod(FabricModJson fabricModJson, Map<Path, RefmapJson> refmaps, List<String> entryPoints, Set<String> classes,
-				   Map<String, String> otherFiles, FileSystemDelegate jarFileSystemDelegate) {
+	public LiteMod(FabricModJson fabricModJson, Map<Path, RefmapJson> refmaps, List<String> entryPoints,
+			Set<String> classes, Map<String, String> otherFiles, FileSystemDelegate jarFileSystemDelegate) {
 
 		this.fabricModJson = fabricModJson;
 		this.refmaps = refmaps;
@@ -66,7 +66,8 @@ public class LiteMod {
 			Profiler.swap("fmj");
 			this.fabricModJson.write(outputJarFileSystem);
 
-			// write this after the classes, as it needs the classes to be remapped to figure out the super classes specified in the mixin annotation
+			// write this after the classes, as it needs the classes to be remapped to figure out the super classes
+			// specified in the mixin annotation
 			for (Map.Entry<Path, RefmapJson> entry: refmaps.entrySet()) {
 				RefmapJson refmap = entry.getValue();
 				Profiler.swap("remap " + entry.getKey().getFileName());
@@ -184,7 +185,7 @@ public class LiteMod {
 
 			// it's a malilib config redirect panel
 			if ("fi/dy/masa/malilib/gui/config/liteloader/RedirectingConfigPanel".equals(storage.remapped.superName)) {
-				this.preLaunchClassBuilder.addEntryPoint(EntryPointType.MALILIB_REDIRECTING_CONFIG_PANEL, storage.remapped.name);
+				preLaunchClassBuilder.addEntryPoint(EntryPointType.MALILIB_REDIRECTING_CONFIG_PANEL, storage.remapped.name);
 			}
 
 			//if (isConfigGuiCandidate(remapped))

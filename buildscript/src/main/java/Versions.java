@@ -8,7 +8,7 @@ public enum Versions {
 	LEGACY_YARN("https://maven.legacyfabric.net", "net.legacyfabric", "yarn", "1.12.2+build.420"), //"1.12.2+build.202206171821"
 	LEGACY_INTERMEDIARY("https://maven.legacyfabric.net", "net.fabricmc", "intermediary", "1.12.2"),
 	QUILT_FLOWER("https://maven.quiltmc.org/repository/release", "org.quiltmc", "quiltflower", "1.8.1"),
-	MODMENU(Maven.MAVEN_LOCAL, "de.skyrising", "modmenu", "1.16.9+1.12.2.e4a2fd3"),
+	MODMENU(Maven.MAVEN_LOCAL, "de.skyrising", "modmenu", "1.16.9+1.12.2.76ef206"),
 	;
 
 	public static final String MINECRAFT = "1.12.2";

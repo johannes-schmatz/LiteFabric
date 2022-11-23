@@ -23,8 +23,8 @@ public class LiteModJson {
     public final List<String> dependsOn;
     public final List<String> mixinConfigs;
 
-    public LiteModJson(String name, String displayName, String description, String version, String author, String mcversion, String revision,
-                       List<String> dependsOn, List<String> mixinConfigs) {
+    public LiteModJson(String name, String displayName, String description, String version, String author,
+            String mcversion, String revision, List<String> dependsOn, List<String> mixinConfigs) {
         this.name = name;
         this.displayName = displayName;
         this.description = description;
