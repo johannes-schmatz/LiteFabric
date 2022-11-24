@@ -105,12 +105,4 @@ public class ListenerType<T> {
 	void initHandles() {
 		for (ListenerHandle<T> handle : handles) handle.init();
 	}
-
-	public static void invoke(MethodHandle handle, Object... args) {
-		try {
-			handle.invokeExact(args);
-		} catch (Throwable e) {
-			throw new RuntimeException(e);
-		}
-	}
 }

@@ -1,18 +1,12 @@
 package de.skyrising.litefabric.runtime;
 
 import com.mojang.realmsclient.dto.RealmsServer;
-import de.skyrising.litefabric.common.EntryPointCollector;
-import de.skyrising.litefabric.runtime.modconfig.ConfigManager;
-import de.skyrising.litefabric.liteloader.*;
-import de.skyrising.litefabric.liteloader.core.ClientPluginChannels;
-import de.skyrising.litefabric.liteloader.core.LiteLoader;
-import de.skyrising.litefabric.liteloader.core.LiteLoaderEventBroker;
-import de.skyrising.litefabric.liteloader.util.Input;
-import de.skyrising.litefabric.runtime.util.InputImpl;
-import de.skyrising.litefabric.mixin.MinecraftClientAccessor;
 import net.fabricmc.loader.api.FabricLoader;
 import net.fabricmc.loader.api.ModContainer;
 import net.fabricmc.loader.api.Version;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.network.ServerInfo;
 import net.minecraft.client.util.Window;
@@ -25,8 +19,16 @@ import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.command.CommandManager;
 import net.minecraft.text.LiteralText;
 import net.minecraft.text.Text;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+
+import de.skyrising.litefabric.common.EntryPointCollector;
+import de.skyrising.litefabric.liteloader.*;
+import de.skyrising.litefabric.liteloader.core.ClientPluginChannels;
+import de.skyrising.litefabric.liteloader.core.LiteLoader;
+import de.skyrising.litefabric.liteloader.core.LiteLoaderEventBroker;
+import de.skyrising.litefabric.liteloader.util.Input;
+import de.skyrising.litefabric.mixin.MinecraftClientAccessor;
+import de.skyrising.litefabric.runtime.modconfig.ConfigManager;
+import de.skyrising.litefabric.runtime.util.InputImpl;
 
 import java.nio.file.Path;
 import java.util.*;
@@ -238,11 +240,15 @@ public class LiteFabric {
 			return;
 		}
 
-		Window window = new Window(client);
-		if (fullscreenChanged) {
-			ListenerType.invoke(ListenerType.MH_FULLSCREEN_TOGGLED, fullscreen);
+		try {
+			Window window = new Window(client);
+			if (fullscreenChanged) {
+				ListenerType.MH_FULLSCREEN_TOGGLED.invokeExact(fullscreen);
+			}
+			ListenerType.MH_VIEWPORT_RESIZED.invokeExact(window, client.width, client.height);
+		} catch (Throwable e) {
+			throw new RuntimeException(e);
 		}
-		ListenerType.invoke(ListenerType.MH_VIEWPORT_RESIZED, window, client.width, client.height);
 	}
 
 	public Text filterChat(Text original) {
