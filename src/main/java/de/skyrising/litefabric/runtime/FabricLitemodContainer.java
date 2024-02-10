@@ -52,7 +52,7 @@ public class FabricLitemodContainer {
 				@SuppressWarnings("unchecked")
 				Class<? extends LiteMod> modClass = (Class<? extends LiteMod>) FabricLauncherBase.getClass(className);
 
-				LiteMod mod = modClass.newInstance();
+				LiteMod mod = modClass.getConstructor().newInstance();
 				mod.init(configPathFile);
 				try {
 					dynamicDisplayName = mod.getName();
@@ -62,7 +62,8 @@ public class FabricLitemodContainer {
 				} catch (Throwable ignored) {}
 				instance = mod;
 				return mod;
-			} catch (ClassNotFoundException | InstantiationException | IllegalAccessException e) {
+			} catch (ClassNotFoundException | InstantiationException | IllegalAccessException | NoSuchMethodException |
+					InvocationTargetException e) {
 				throw new RuntimeException("Failed to initialize LiteMod " + this.modId, e);
 			}
 		}
@@ -87,22 +88,29 @@ public class FabricLitemodContainer {
 				Field factory = fieldClass.getDeclaredField("configScreenFactory");
 				factory.setAccessible(true);
 
-				ConfigPanel panel = (ConfigPanel) panelClass.newInstance();
+				ConfigPanel panel = (ConfigPanel) panelClass.getConstructor().newInstance();
 
 				@SuppressWarnings("unchecked")
 				Supplier<Screen> configScreenFactory = (Supplier<Screen>) factory.get(panel);
 
-				return configScreenFactory.get();
-			} catch (InstantiationException | IllegalAccessException | ClassNotFoundException | NoSuchFieldException e) {
+				Class<?> baseScreen = loader.loadClass("fi.dy.masa.malilib.gui.BaseScreen");
+				Method setParent = baseScreen.getDeclaredMethod("setParent", Screen.class);
+
+				Screen configScreen = configScreenFactory.get();
+
+				setParent.invoke(configScreen, parent);
+
+				return configScreen;
+			} catch (InstantiationException | IllegalAccessException | ClassNotFoundException | NoSuchFieldException |
+					NoSuchMethodException | InvocationTargetException e) {
 				e.printStackTrace();
 				//throw new RuntimeException(e);
 			}
 
-
 			System.err.println(className + " is sus!");
 			try {
 				Class<?> cls = FabricLitemodContainer.class.getClassLoader().loadClass(className.replace('/', '.'));
-				ConfigPanel panel = (ConfigPanel) cls.newInstance();
+				ConfigPanel panel = (ConfigPanel) cls.getConstructor().newInstance();
 				Method getConfigScreenFactory = cls.getMethod("getConfigScreenFactory");
 
 				@SuppressWarnings("unchecked")
