@@ -8,6 +8,8 @@ import org.jetbrains.annotations.NotNull;
 import java.util.*;
 
 public class ModMenuCompat implements ModMenuApi {
+    // TODO: instead of having LiteFabric have one ModMenuCompat for all of the remapped mods, use objectwebs asm api to build ModMenuCompat classes for each
+    //  mod (which can then also call into LiteFabric for helper methods), but provide the mods screen themself
     @Override
     public @NotNull Map<String, ConfigScreenFactory<?>> getProvidedConfigScreenFactories() {
         Map<String, ConfigScreenFactory<?>> factories = new HashMap<>();
