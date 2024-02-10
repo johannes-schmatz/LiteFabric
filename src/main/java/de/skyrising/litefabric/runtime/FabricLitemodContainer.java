@@ -7,6 +7,8 @@ import de.skyrising.litefabric.liteloader.modconfig.ConfigPanel;
 import de.skyrising.litefabric.runtime.modconfig.ConfigPanelScreen;
 
 import net.fabricmc.loader.impl.launch.FabricLauncherBase;
+import org.jetbrains.annotations.Nullable;
+
 import net.minecraft.client.gui.screen.Screen;
 
 import java.io.*;
@@ -41,7 +43,7 @@ public class FabricLitemodContainer {
 		return instance;
 	}
 
-	public LiteMod init(Path configPath) {
+	public @Nullable LiteMod init(Path configPath) {
 		File configPathFile = configPath.toFile();
 		Set<String> classes = entryPoints.get(EntryPointType.LITEMOD);
 
@@ -70,7 +72,7 @@ public class FabricLitemodContainer {
 		return null;
 	}
 
-	public Screen getConfigScreen(Screen parent) {
+	public @Nullable Screen getConfigScreen(Screen parent) {
 		Set<String> configPanelClasses = this.entryPoints.get(EntryPointType.MALILIB_REDIRECTING_CONFIG_PANEL);
 
 		if (configPanelClasses == null)
@@ -127,7 +129,7 @@ public class FabricLitemodContainer {
 		return null;
 	}
 
-	private Screen getConfigScreenNonMalilib(Screen parent) {
+	private @Nullable Screen getConfigScreenNonMalilib(Screen parent) {
 		// try the "normal" LiteLoader configs
 		if (instance instanceof Configurable) {
 			Configurable configurable = (Configurable) instance;

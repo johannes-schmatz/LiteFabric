@@ -1,6 +1,7 @@
 package de.skyrising.litefabric.remapper.util;
 
 import net.fabricmc.mapping.tree.*;
+import org.jetbrains.annotations.Nullable;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
@@ -221,7 +222,8 @@ public class LitemodRemapper extends Remapper implements IRemapper {
             Map<String, FieldDef> fieldMap = fields.computeIfAbsent(owner, this::computeFields);
             if (fieldMap != null) {
                 FieldDef fieldDef = fieldMap.get(name + descriptor);
-                if (fieldDef != null) return fieldDef.getName(targetNamespace);
+                if (fieldDef != null)
+                    return fieldDef.getName(targetNamespace);
             }
         }
         return mapFieldNameFromSupers(owner, name, descriptor);
@@ -231,7 +233,7 @@ public class LitemodRemapper extends Remapper implements IRemapper {
         return owner == null || owner.isEmpty() || owner.charAt(0) == '[';
     }
 
-    private String mapFieldNameFromSupers(String owner, String name, String descriptor) {
+    private @Nullable String mapFieldNameFromSupers(String owner, String name, String descriptor) {
         Set<String> superClassNames = getSuperClasses(owner);
         for (String superClass : superClassNames) {
             String superMap = mapFieldName0(superClass, name, descriptor);
@@ -247,13 +249,13 @@ public class LitemodRemapper extends Remapper implements IRemapper {
         return name;
     }
 
-    private Map<String, MethodDef> computeMethods(String clsName) {
+    private @Nullable Map<String, MethodDef> computeMethods(String clsName) {
         ClassDef clsDef = classes.get(clsName);
         if (clsDef == null) return null;
         return computeDescriptored(clsDef.getMethods());
     }
 
-    private String mapMethodName0(String owner, String name, String descriptor) {
+    private @Nullable String mapMethodName0(String owner, String name, String descriptor) {
         if (isUnmappedMethod(owner, name)) return null;
         boolean knownClass = classes.containsKey(owner);
         if (!knownClass && classesReverse.containsKey(owner)) {
@@ -281,7 +283,7 @@ public class LitemodRemapper extends Remapper implements IRemapper {
         return name.isEmpty() || name.charAt(0) == '<' || owner == null || owner.isEmpty() || owner.charAt(0) == '[';
     }
 
-    private String mapMethodNameFromSupers(String owner, String name, String descriptor) {
+    private @Nullable String mapMethodNameFromSupers(String owner, String name, String descriptor) {
         Set<String> superClassNames = getSuperClasses(owner);
         for (String superClass : superClassNames) {
             // for every super class we try to map the method in it, if it's successful return that mapping
