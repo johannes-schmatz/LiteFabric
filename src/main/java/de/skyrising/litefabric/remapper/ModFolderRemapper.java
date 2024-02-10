@@ -1,11 +1,12 @@
 package de.skyrising.litefabric.remapper;
 
-import de.skyrising.litefabric.Profiler;
-import de.skyrising.litefabric.common.EntryPointType;
-import de.skyrising.litefabric.remapper.util.LitemodRemapper;
 import net.fabricmc.loader.api.FabricLoader;
 import net.fabricmc.mapping.tree.TinyMappingFactory;
 import net.fabricmc.mapping.tree.TinyTree;
+
+import de.skyrising.litefabric.Profiler;
+import de.skyrising.litefabric.common.EntryPointType;
+import de.skyrising.litefabric.remapper.util.LitemodRemapper;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -54,27 +55,10 @@ public class ModFolderRemapper {
 		}
 
 		Profiler.push("walkFileTree");
+
 		Map<String, Path> fabricMods = new HashMap<>();
 		Map<String, Path> liteMods = new HashMap<>();
-		try {
-			Files.walkFileTree(modsFolder, EnumSet.of(FileVisitOption.FOLLOW_LINKS), 1, new SimpleFileVisitor<Path>() {
-				@Override
-				public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
-					String fileName = file.getFileName().toString();
-					if (!fileName.startsWith(".") && !Files.isHidden(file)) {
-						if (fileName.endsWith(".jar")) {
-							fabricMods.put(fileName, file);
-						} else if (fileName.endsWith(".litemod")) {
-							liteMods.put(fileName, file);
-						}
-					}
-
-					return FileVisitResult.CONTINUE;
-				}
-			});
-		} catch (IOException e) {
-			throw new RuntimeException(e);
-		}
+		getModsFromFolders(modsFolder, fabricMods, liteMods);
 
 		if (liteMods.isEmpty())
 			return false; // if there are no litemods, continue
@@ -103,30 +87,24 @@ public class ModFolderRemapper {
 
 		Profiler.swap("remap");
 
+		Map<Path, LiteMod> loadedLiteMods = new HashMap<>(liteModsToRemap.size());
 		liteModsToRemap.forEach((liteMod, fabricMod) -> {
 			{
 				String fileName = liteMod.getFileName().toString();
-				Profiler.push(fileName.substring(0, fileName.length() - ".litemod".length()));
 				System.out.println("Remapping litemod: " + fileName);
 			}
 
 			//if (Files.exists(fabricMod)) // this shouldn't trigger
 			//	throw new IllegalStateException();
 
-			Profiler.push("load");
-
-			LiteMod mod = LiteMod.load(liteMod);
-
-			Profiler.swap("write");
-
-			mod.write(remapper, fabricMod);
-
-			Profiler.pop();
-
-			Profiler.pop();
+			loadedLiteMods.put(fabricMod, LiteMod.load(liteMod));
 		});
 
-		int remapped = liteModsToRemap.size();
+		loadedLiteMods.forEach((fabricMod, liteMod) -> {
+			liteMod.write(remapper, fabricMod);
+		});
+
+		int remapped = loadedLiteMods.size();
 
 		Profiler.pop();
 
@@ -136,5 +114,28 @@ public class ModFolderRemapper {
 			return true;
 		}
 		return false;
+	}
+
+	private static void getModsFromFolders(Path modsFolder, Map<String, Path> fabricMods, Map<String, Path> liteMods) {
+		try {
+			Files.walkFileTree(modsFolder, EnumSet.of(FileVisitOption.FOLLOW_LINKS), 1, new SimpleFileVisitor<Path>() {
+				@Override
+				public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
+					String fileName = file.getFileName().toString();
+					if (!fileName.startsWith(".") && !Files.isHidden(file)) {
+						if (fileName.endsWith(".jar")) {
+							fabricMods.put(fileName, file);
+						} else if (fileName.endsWith(".litemod")) {
+							liteMods.put(fileName, file);
+						}
+					}
+
+					return FileVisitResult.CONTINUE;
+				}
+			});
+		} catch (IOException e) {
+			throw new RuntimeException(e);
+		}
+
 	}
 }
