@@ -228,8 +228,7 @@ public class LiteFabric {
 	public void onResize() {
 		MinecraftClient client = MinecraftClient.getInstance();
 
-		// TODO: recheck with new mappings
-		boolean fullscreen = client.isWindowFocused(); // incorrect yarn name
+		boolean fullscreen = client.isFullscreen();
 		boolean fullscreenChanged = fullscreen != wasFullscreen;
 
 		if (fullscreenChanged) {
