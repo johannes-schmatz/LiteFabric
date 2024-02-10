@@ -2,6 +2,7 @@ package de.skyrising.litefabric.liteloader.modconfig;
 
 import de.skyrising.litefabric.mixin.ButtonWidgetAccessor;
 import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.widget.ButtonWidget;
 import net.minecraft.client.gui.widget.LabelWidget;
 import net.minecraft.client.gui.widget.TextFieldWidget;
@@ -31,6 +32,61 @@ public abstract class AbstractConfigPanel implements ConfigPanel {
     protected void clearOptions() {
         options.clear();
         height = 0;
+    }
+
+    protected void addLabel(int id, int x, int y, int width, int height, int color, String... lines) {
+        //TODO: implement
+    }
+
+    protected ConfigTextField addTextField(int id, int x, int y, int width, int height) {
+        //TODO: implement
+        return new ConfigTextField() {
+            private String text = "";
+            private TextFieldWidget field = new TextFieldWidget(-1, MinecraftClient.getInstance().textRenderer, 100,
+                    100, 100, 100);
+            @Override
+            public TextFieldWidget getNativeTextField() {
+                return field;
+            }
+
+            @Override
+            public String getText() {
+                return text;
+            }
+
+            @Override
+            public ConfigTextField setText(String text) {
+                this.text = text;
+                field.setText(text);
+                return this;
+            }
+
+            @Override
+            public ConfigTextField setRegex(String regex, boolean force) {
+                return this;
+            }
+
+            @Override
+            public boolean isValid() {
+                return true;
+            }
+
+            @Override
+            public ConfigTextField setMaxLength(int maxLength) {
+                return this;
+            }
+        };
+    }
+
+    protected void drawHoveringText(List<String> lines, int x, int y) {
+        Screen s = MinecraftClient.getInstance().currentScreen;
+        if (s != null) s.renderTooltip(lines, x, y);
+        // TODO: implement
+    }
+
+    public int getContentHeight() {
+        // TODO: implement
+        return 200;
     }
 
     protected <T extends ButtonWidget> T addControl(T control, ConfigOptionListener<T> listener) {

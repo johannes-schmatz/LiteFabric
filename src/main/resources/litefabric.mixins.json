@@ -15,6 +15,7 @@
 		"KeyBindingAccessor",
 		"MinecraftClientAccessor",
 		"MinecraftClientMixin",
-		"ModRemappingCallbackMixin"
+		"ModRemappingCallbackMixin",
+		"TextFieldWidgetMixin"
 	]
 }
