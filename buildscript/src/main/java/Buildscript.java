@@ -38,12 +38,14 @@ public class Buildscript extends SimpleFabricProject {
 
 	@Override
 	public MappingTree createMappings() {
-		return Versions.LEGACY_YARN.ofMaven(Yarn::ofMaven).tree;
+		//return Versions.LEGACY_YARN.ofMaven(Yarn::ofMaven).tree;
+		return Versions.V2_FEATHER.ofMaven(Yarn::ofMaven).tree;
 	}
 
 	@Override
 	public FabricLoader getLoader() {
-		return Versions.FABRIC_LOADER.ofMaven(FabricLoader::new);
+		//return Versions.FABRIC_LOADER.ofMaven(FabricLoader::new);
+		return Versions.V2_QUILT_LOADER.ofMaven(FabricLoader::new);
 	}
 
 	@Override
@@ -51,7 +53,8 @@ public class Buildscript extends SimpleFabricProject {
 		// Fix for brachyura using the default java User-Agent, which is blocked by cloudflare
 		System.setProperty("http.agent", "brachyura http agent");
 		d.add(
-				Versions.MODMENU.ofMaven(Maven::getMavenJarDep),
+				//Versions.MODMENU.ofMaven(Maven::getMavenJarDep),
+				Versions.V2_MODMENU.ofMaven(Maven::getMavenJarDep),
 				FabricContext.ModDependencyFlag.COMPILE,
 				FabricContext.ModDependencyFlag.RUNTIME
 		);
@@ -69,7 +72,8 @@ public class Buildscript extends SimpleFabricProject {
 		@Override
 		protected MappingTree createIntermediary() {
 			// use legacy fabric intermediary
-			return Versions.LEGACY_INTERMEDIARY.ofMaven(Intermediary::ofMaven).tree;
+			//return Versions.LEGACY_INTERMEDIARY.ofMaven(Intermediary::ofMaven).tree;
+			return Versions.V2_CALAMUS.ofMaven(Intermediary::ofMaven).tree;
 		}
 	}
 
