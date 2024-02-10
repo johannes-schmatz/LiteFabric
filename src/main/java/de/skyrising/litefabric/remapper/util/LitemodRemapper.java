@@ -305,15 +305,17 @@ public class LitemodRemapper extends Remapper implements IRemapper {
     private Set<String> getSuperClasses(String cls) {
         if (cls == null)
             return Collections.emptySet();
-        if (superClasses.containsKey(cls))
+        if (superClasses.containsKey(cls)) // TODO: enable caching again
             return superClasses.get(cls);
         //if (mixinAnnotationSuperClasses.containsKey(cls))
         //    return Collections.singleton(mixinAnnotationSuperClasses.get(cls));
 
-        InputStream in = LitemodRemapper.class.getClassLoader().getResourceAsStream(map(cls) + ".class");
+        String className = map(cls);
+        InputStream in = LitemodRemapper.class.getClassLoader().getResourceAsStream(className + ".class");
 
         if (in == null) {
-            return addSuperClassMapping(cls, Collections.emptySet());
+            superClasses.put(cls, Collections.emptySet());
+            return Collections.emptySet();
         }
 
         try {
@@ -325,12 +327,8 @@ public class LitemodRemapper extends Remapper implements IRemapper {
         } catch (IOException e) {
             e.printStackTrace();
         }
-        return addSuperClassMapping(cls, Collections.emptySet());
-    }
-
-    private Set<String> addSuperClassMapping(String cls, Set<String> supers) {
-        this.superClasses.put(cls, supers);
-        return supers;
+        superClasses.put(cls, Collections.emptySet());
+        return Collections.emptySet();
     }
 
     @Override
