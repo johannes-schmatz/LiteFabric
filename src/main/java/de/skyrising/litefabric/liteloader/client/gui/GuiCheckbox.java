@@ -1,6 +1,6 @@
 package de.skyrising.litefabric.liteloader.client.gui;
 
-import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.widget.ButtonWidget;
 
 public class GuiCheckbox extends ButtonWidget {
@@ -18,14 +18,14 @@ public class GuiCheckbox extends ButtonWidget {
                 id,
                 x,
                 y,
-                MinecraftClient.getInstance().textRenderer.getStringWidth(label) + CHECK_BOX_SIZE_TOTAL,
+                Minecraft.getInstance().textRenderer.getStringWidth(label) + CHECK_BOX_SIZE_TOTAL,
                 SIZE,
                 label
         );
     }
 
     @Override
-    public void method_891(MinecraftClient client, int mouseX, int mouseY, float delta) {
+    public void render(Minecraft client, int mouseX, int mouseY, float delta) {
         if (!visible) return;
         fill(x + CHECK_BOX_MARGIN, y, x + width, y + height - EXTRA_MARGIN, 0x33ffffff);
         hovered = mouseX >= x + CHECK_BOX_MARGIN && mouseY >= y && mouseX < x + width &&
@@ -39,13 +39,13 @@ public class GuiCheckbox extends ButtonWidget {
         if (checked) {
             fill(x1 + 2, y1 + 2, x2 - 2, y2 - 2, 0xff00e000);
         }
-        renderBg(client, mouseX, mouseY);
+        renderBackground(client, mouseX, mouseY);
         int textColor = 0xe0e0e0;
         if (!active) {
             textColor = 0xa0a0a0;
         } else if (hovered) {
             textColor = 0xffffa0;
         }
-        drawWithShadow(client.textRenderer, message, x + TEXT_OFFSET_X, y + TEXT_OFFSET_Y, textColor);
+        drawString(client.textRenderer, message, x + TEXT_OFFSET_X, y + TEXT_OFFSET_Y, textColor);
     }
 }

@@ -1,7 +1,8 @@
 package de.skyrising.litefabric.mixin;
 
 import de.skyrising.litefabric.runtime.LiteFabric;
-import net.minecraft.client.MinecraftClient;
+
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.render.GameRenderer;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
@@ -13,43 +14,75 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 @Mixin(GameRenderer.class)
 public abstract class GameRendererMixin {
 
-    @Shadow @Final private MinecraftClient client;
+    @Shadow @Final private Minecraft minecraft;
 
     @Shadow protected abstract void setupCamera(float tickDelta, int anaglyphFilter);
 
-    @Inject(method = "renderWorld(FJ)V", at = @At(value = "INVOKE", target = "Lnet/minecraft/util/profiler/Profiler;push(Ljava/lang/String;)V"))
+    @Inject(
+            method = "renderWorld(FJ)V",
+            at = @At(
+                    value = "INVOKE",
+                    target = "Lnet/minecraft/util/profiler/Profiler;push(Ljava/lang/String;)V"
+            )
+    )
     private void litefabric$onRenderWorld(float partialTicks, long timeSlice, CallbackInfo ci) {
-        client.profiler.push("litefabric");
+        minecraft.profiler.push("litefabric");
         LiteFabric.getInstance().onRenderWorld(partialTicks);
-        client.profiler.pop();
+        minecraft.profiler.pop();
     }
 
-    @Inject(method = "renderWorld(FJ)V", at = @At(value = "INVOKE", target = "Lnet/minecraft/util/profiler/Profiler;pop()V"))
+    @Inject(
+            method = "renderWorld(FJ)V",
+            at = @At(
+                    value = "INVOKE",
+                    target = "Lnet/minecraft/util/profiler/Profiler;pop()V"
+            )
+    )
     private void litefabric$onPostRender(float partialTicks, long timeSlice, CallbackInfo ci) {
-        client.profiler.push("litefabric");
+        minecraft.profiler.push("litefabric");
         setupCamera(partialTicks, 0);
         LiteFabric.getInstance().onPostRender(partialTicks);
-        client.profiler.pop();
+        minecraft.profiler.pop();
     }
 
-    @Inject(method = "renderWorld(IFJ)V", at = @At(value = "INVOKE_STRING", target = "Lnet/minecraft/util/profiler/Profiler;swap(Ljava/lang/String;)V", args = "ldc=litParticles"))
+    @Inject(
+            method = "render(IFJ)V",
+            at = @At(
+                    value = "INVOKE_STRING",
+                    target = "Lnet/minecraft/util/profiler/Profiler;swap(Ljava/lang/String;)V",
+                    args = "ldc=litParticles"
+            )
+    )
     private void litefabric$onPostRenderEntities(int pass, float partialTicks, long timeSlice, CallbackInfo ci) {
-        client.profiler.push("litefabric");
+        minecraft.profiler.push("litefabric");
         LiteFabric.getInstance().onPostRenderEntities(partialTicks);
-        client.profiler.pop();
+        minecraft.profiler.pop();
     }
 
-    @Inject(method = "render", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/hud/InGameHud;render(F)V"))
+    @Inject(
+            method = "render(FJ)V",
+            at = @At(
+                    value = "INVOKE",
+                    target = "Lnet/minecraft/client/gui/GameGui;render(F)V"
+            )
+    )
     private void litefabric$onPreRenderHud(float partialTicks, long timeSlice, CallbackInfo ci) {
-        client.profiler.push("litefabric");
+        minecraft.profiler.push("litefabric");
         LiteFabric.getInstance().onPreRenderHUD();
-        client.profiler.pop();
+        minecraft.profiler.pop();
     }
 
-    @Inject(method = "render", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/hud/InGameHud;render(F)V", shift = At.Shift.AFTER))
+    @Inject(
+            method = "render(FJ)V",
+            at = @At(
+                    value = "INVOKE",
+                    target = "Lnet/minecraft/client/gui/GameGui;render(F)V",
+                    shift = At.Shift.AFTER
+            )
+    )
     private void litefabric$onPostRenderHud(float partialTicks, long timeSlice, CallbackInfo ci) {
-        client.profiler.push("litefabric");
+        minecraft.profiler.push("litefabric");
         LiteFabric.getInstance().onPostRenderHUD();
-        client.profiler.pop();
+        minecraft.profiler.pop();
     }
 }

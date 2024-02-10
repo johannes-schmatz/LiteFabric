@@ -1,7 +1,8 @@
 package de.skyrising.litefabric.liteloader.modconfig;
 
 import de.skyrising.litefabric.mixin.ButtonWidgetAccessor;
-import net.minecraft.client.MinecraftClient;
+
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.widget.ButtonWidget;
 import net.minecraft.client.gui.widget.LabelWidget;
@@ -12,13 +13,13 @@ import java.util.ArrayList;
 import java.util.List;
 
 public abstract class AbstractConfigPanel implements ConfigPanel {
-    protected final MinecraftClient mc;
+    protected final Minecraft mc;
     private final List<ConfigOption> options = new ArrayList<>();
     private int height = 0;
     private ConfigOption selected;
 
     public AbstractConfigPanel() {
-        this.mc = MinecraftClient.getInstance();
+        this.mc = Minecraft.getInstance();
     }
 
     @Override
@@ -42,7 +43,7 @@ public abstract class AbstractConfigPanel implements ConfigPanel {
         //TODO: implement
         return new ConfigTextField() {
             private String text = "";
-            private TextFieldWidget field = new TextFieldWidget(-1, MinecraftClient.getInstance().textRenderer, 100,
+            private TextFieldWidget field = new TextFieldWidget(-1, Minecraft.getInstance().textRenderer, 100,
                     100, 100, 100);
             @Override
             public TextFieldWidget getNativeTextField() {
@@ -79,7 +80,7 @@ public abstract class AbstractConfigPanel implements ConfigPanel {
     }
 
     protected void drawHoveringText(List<String> lines, int x, int y) {
-        Screen s = MinecraftClient.getInstance().currentScreen;
+        Screen s = Minecraft.getInstance().screen;
         if (s != null) s.renderTooltip(lines, x, y);
         // TODO: implement
     }
@@ -162,10 +163,10 @@ public abstract class AbstractConfigPanel implements ConfigPanel {
 
     abstract static class ConfigOption {
         void onTick() {}
-        abstract void draw(MinecraftClient client, int mouseX, int mouseY, float partialTicks);
-        void mouseReleased(MinecraftClient client, int mouseX, int mouseY) {}
-        boolean mousePressed(MinecraftClient client, int mouseX, int mouseY) { return false; }
-        boolean keyPressed(MinecraftClient client, char keyChar, int keyCode) { return false; }
+        abstract void draw(Minecraft client, int mouseX, int mouseY, float partialTicks);
+        void mouseReleased(Minecraft client, int mouseX, int mouseY) {}
+        boolean mousePressed(Minecraft client, int mouseX, int mouseY) { return false; }
+        boolean keyPressed(Minecraft client, char keyChar, int keyCode) { return false; }
     }
 
     static class ConfigOptionLabel extends ConfigOption {
@@ -176,7 +177,7 @@ public abstract class AbstractConfigPanel implements ConfigPanel {
         }
 
         @Override
-        void draw(MinecraftClient client, int mouseX, int mouseY, float partialTicks) {
+        void draw(Minecraft client, int mouseX, int mouseY, float partialTicks) {
             label.render(client, mouseX, mouseY);
         }
     }
@@ -191,12 +192,12 @@ public abstract class AbstractConfigPanel implements ConfigPanel {
         }
 
         @Override
-        void draw(MinecraftClient client, int mouseX, int mouseY, float partialTicks) {
-            button.method_891(client, mouseX, mouseY, partialTicks);
+        void draw(Minecraft client, int mouseX, int mouseY, float partialTicks) {
+            button.render(client, mouseX, mouseY, partialTicks);
         }
 
         @Override
-        boolean mousePressed(MinecraftClient client, int mouseX, int mouseY) {
+        boolean mousePressed(Minecraft client, int mouseX, int mouseY) {
             if (button.isMouseOver(client, mouseX, mouseY)) {
                 button.playDownSound(client.getSoundManager());
                 if (listener != null) {

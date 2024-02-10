@@ -5,7 +5,8 @@ import de.skyrising.litefabric.mixin.KeyBindingAccessor;
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import net.fabricmc.loader.api.FabricLoader;
-import net.minecraft.client.MinecraftClient;
+
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.options.GameOptions;
 import net.minecraft.client.options.KeyBinding;
 import org.apache.logging.log4j.LogManager;
@@ -25,39 +26,39 @@ public class InputImpl extends Input {
 
     @Override
     public void registerKeyBinding(KeyBinding binding) {
-        GameOptions options = MinecraftClient.getInstance().options;
-        List<KeyBinding> keyBindings = new ArrayList<>(Arrays.asList(options.keysAll));
+        GameOptions options = Minecraft.getInstance().options;
+        List<KeyBinding> keyBindings = new ArrayList<>(Arrays.asList(options.keyBindings));
         if (!keyBindings.contains(binding)) {
-            String id = binding.getTranslationKey();
+            String id = binding.getName();
             if (storedKeys.containsKey(id)) {
-                binding.setCode(storedKeys.getInt(id));
+                binding.setKeyCode(storedKeys.getInt(id));
             }
             keyBindings.add(binding);
             this.keyBindings.add(binding);
-            options.keysAll = keyBindings.toArray(new KeyBinding[0]);
+            options.keyBindings = keyBindings.toArray(new KeyBinding[0]);
             String category = binding.getCategory();
             Map<String, Integer> map = KeyBindingAccessor.getCategoryMap();
             if (!map.containsKey(category)) map.put(category, 1000 + map.size());
-            KeyBinding.updateKeysByCode();
+            KeyBinding.resetMapping();
             save();
         }
     }
 
     @Override
     public void unRegisterKeyBinding(KeyBinding binding) {
-        GameOptions options = MinecraftClient.getInstance().options;
-        List<KeyBinding> keyBindings = new ArrayList<>(Arrays.asList(options.keysAll));
+        GameOptions options = Minecraft.getInstance().options;
+        List<KeyBinding> keyBindings = new ArrayList<>(Arrays.asList(options.keyBindings));
         if (this.keyBindings.remove(binding)) {
             keyBindings.remove(binding);
-            options.keysAll = keyBindings.toArray(new KeyBinding[0]);
-            KeyBinding.updateKeysByCode();
+            options.keyBindings = keyBindings.toArray(new KeyBinding[0]);
+            KeyBinding.resetMapping();
         }
     }
 
     public void onTick() {
         boolean changed = false;
         for (KeyBinding k : keyBindings) {
-            if (k.getCode() != storedKeys.getInt(k.getTranslationKey())) {
+            if (k.getKeyCode() != storedKeys.getInt(k.getName())) {
                 changed = true;
                 break;
             }
@@ -83,8 +84,8 @@ public class InputImpl extends Input {
         if (!loaded) return;
         Properties props = new Properties();
         for (KeyBinding k : keyBindings) {
-            String id = k.getTranslationKey();
-            int key = k.getCode();
+            String id = k.getName();
+            int key = k.getKeyCode();
             props.setProperty(id, String.valueOf(key));
             storedKeys.put(id, key);
         }

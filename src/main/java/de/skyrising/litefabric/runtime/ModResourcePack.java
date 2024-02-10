@@ -2,13 +2,13 @@ package de.skyrising.litefabric.runtime;
 
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import com.mojang.blaze3d.platform.TextureUtil;
 import net.fabricmc.loader.api.ModContainer;
-import net.minecraft.client.resource.ResourceMetadataProvider;
-import net.minecraft.client.texture.TextureUtil;
-import net.minecraft.resource.ResourcePack;
-import net.minecraft.resource.ZipResourcePack;
-import net.minecraft.util.Identifier;
-import net.minecraft.util.MetadataSerializer;
+import net.minecraft.client.resource.metadata.ResourceMetadataSection;
+import net.minecraft.client.resource.metadata.ResourceMetadataSerializerRegistry;
+import net.minecraft.client.resource.pack.ResourcePack;
+import net.minecraft.client.resource.pack.ZippedResourcePack;
+import net.minecraft.resource.Identifier;
 import org.apache.commons.io.IOUtils;
 import org.jetbrains.annotations.Nullable;
 
@@ -26,7 +26,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-public class ModResourcePack extends ZipResourcePack implements ResourcePack {
+public class ModResourcePack extends ZippedResourcePack implements ResourcePack {
 	private final ModContainer container;
 	private final Path root;
 	public ModResourcePack(String modId, ModContainer container) {
@@ -59,20 +59,21 @@ public class ModResourcePack extends ZipResourcePack implements ResourcePack {
 			at com.mamiyaotaru.voxelmap.litemod.LiteModVoxelMap.onInitCompleted(Unknown Source)
 			at de.skyrising.litefabric.runtime.LiteFabric.onInitCompleted(LiteFabric.java:109)
 			... 7 more
+		(note: this crash uses legacy-fabric yarn mappings)
 
-			Calling this here makes the ZipFile no longer null, fixing this crash.
+		Calling this here makes the ZipFile no longer null, fixing this crash.
 		 */
 		if ("voxelmap".equals(modId))
-			containsFile("");
+			hasResource("");
 	}
 
 	@Override
-	public InputStream open(Identifier id) throws IOException {
+	public InputStream getResource(Identifier id) throws IOException {
 		return Files.newInputStream(getPath(id));
 	}
 
 	@Override
-	public boolean contains(Identifier id) {
+	public boolean hasResource(Identifier id) {
 		return Files.exists(getPath(id));
 	}
 
@@ -91,8 +92,10 @@ public class ModResourcePack extends ZipResourcePack implements ResourcePack {
 
 	@Nullable
 	@Override
-	public <T extends ResourceMetadataProvider> T parseMetadata(MetadataSerializer serializer,
-																String key) throws IOException {
+	public <T extends ResourceMetadataSection> T getMetadataSection(
+			ResourceMetadataSerializerRegistry serializer,
+			String key
+	) throws IOException {
 		InputStream packMcmeta;
 		try {
 			packMcmeta = this.openFile0("pack.mcmeta");
@@ -104,7 +107,7 @@ public class ModResourcePack extends ZipResourcePack implements ResourcePack {
 		try {
 			bufferedReader = new BufferedReader(new InputStreamReader(packMcmeta, StandardCharsets.UTF_8));
 			JsonObject jsonObject = new JsonParser().parse(bufferedReader).getAsJsonObject();
-			return serializer.fromJson(key, jsonObject);
+			return serializer.readMetadata(key, jsonObject);
 		} finally {
 			IOUtils.closeQuietly(bufferedReader);
 		}
@@ -113,7 +116,7 @@ public class ModResourcePack extends ZipResourcePack implements ResourcePack {
 
 	@Override
 	public BufferedImage getIcon() throws IOException {
-		return TextureUtil.create(this.openFile0("pack.png"));
+		return TextureUtil.readImage(this.openFile0("pack.png"));
 	}
 
 	@Override

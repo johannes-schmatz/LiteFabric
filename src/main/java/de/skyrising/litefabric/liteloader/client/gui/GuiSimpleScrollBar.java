@@ -1,8 +1,8 @@
 package de.skyrising.litefabric.liteloader.client.gui;
 
-import net.minecraft.client.gui.DrawableHelper;
+import net.minecraft.client.gui.GuiElement;
 
-public class GuiSimpleScrollBar extends DrawableHelper {
+public class GuiSimpleScrollBar extends GuiElement {
 	public void setDragging(boolean dragging) {
 		//TODO: implement
 	}

@@ -7,5 +7,5 @@ import org.spongepowered.asm.mixin.gen.Accessor;
 
 @Mixin(ChatMessageS2CPacket.class)
 public interface ChatMessageS2CPacketAccessor {
-    @Accessor void setText(Text message);
+    @Accessor("message") void setText(Text message);
 }

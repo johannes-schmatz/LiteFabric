@@ -8,6 +8,6 @@ import java.util.Map;
 
 @Mixin(KeyBinding.class)
 public interface KeyBindingAccessor {
-    @Accessor("field_15867")
+    @Accessor("CATEGORY_SORT_ORDER")
     static Map<String, Integer> getCategoryMap() { throw new IllegalStateException(); }
 }

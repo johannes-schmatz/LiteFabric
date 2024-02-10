@@ -1,12 +1,13 @@
 package de.skyrising.litefabric.mixin;
 
 import de.skyrising.litefabric.runtime.LiteFabric;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.network.ClientPlayNetworkHandler;
-import net.minecraft.network.listener.ClientPlayPacketListener;
+
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.network.handler.ClientPlayNetworkHandler;
+import net.minecraft.client.network.handler.ClientPlayPacketHandler;
 import net.minecraft.network.packet.s2c.play.ChatMessageS2CPacket;
 import net.minecraft.network.packet.s2c.play.CustomPayloadS2CPacket;
-import net.minecraft.network.packet.s2c.play.GameJoinS2CPacket;
+import net.minecraft.network.packet.s2c.play.LoginS2CPacket;
 import net.minecraft.text.Text;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
@@ -14,18 +15,28 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(ClientPlayNetworkHandler.class)
-public abstract class ClientPlayNetworkHandlerMixin implements ClientPlayPacketListener {
-    @Inject(method = "onGameJoin", at = @At(value = "INVOKE", target = "Lnet/minecraft/network/NetworkThreadUtils;forceMainThread(Lnet/minecraft/network/Packet;Lnet/minecraft/network/listener/PacketListener;Lnet/minecraft/util/ThreadExecutor;)V", shift = At.Shift.AFTER))
-    private void litefabric$onJoinGame(GameJoinS2CPacket packet, CallbackInfo ci) {
+public abstract class ClientPlayNetworkHandlerMixin implements ClientPlayPacketHandler {
+    @Inject(
+            method = "handleLogin",
+            at = @At(
+                    value = "INVOKE",
+                    target = "Lnet/minecraft/network/PacketUtils;ensureOnSameThread(Lnet/minecraft/network/packet/Packet;Lnet/minecraft/network/handler/PacketHandler;Lnet/minecraft/util/BlockableEventLoop;)V",
+                    shift = At.Shift.AFTER
+            )
+    )
+    private void litefabric$handleJoinGame(LoginS2CPacket packet, CallbackInfo ci) {
         try {
-            LiteFabric.getInstance().onJoinGame(this, packet, MinecraftClient.getInstance().getCurrentServerEntry());
+            LiteFabric.getInstance().onJoinGame(this, packet, Minecraft.getInstance().getCurrentServerEntry());
         } catch (Throwable e) {
             e.printStackTrace();
         }
     }
 
-    @Inject(method = "onCustomPayload", at = @At("RETURN"))
-    private void litefabric$onCustomPayload(CustomPayloadS2CPacket packet, CallbackInfo ci) {
+    @Inject(
+            method = "handleCustomPayload",
+            at = @At("RETURN")
+    )
+    private void litefabric$handleCustomPayload(CustomPayloadS2CPacket packet, CallbackInfo ci) {
         try {
             LiteFabric.getInstance().getClientPluginChannels().onPluginChannelMessage(packet);
         } catch (Throwable e) {
@@ -33,8 +44,15 @@ public abstract class ClientPlayNetworkHandlerMixin implements ClientPlayPacketL
         }
     }
 
-    @Inject(method = "onChatMessage", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/hud/InGameHud;method_14471(Lnet/minecraft/util/ChatMessageType;Lnet/minecraft/text/Text;)V"), cancellable = true)
-    private void litefabric$onChat(ChatMessageS2CPacket packet, CallbackInfo ci) {
+    @Inject(
+            method = "handleChatMessage",
+            at = @At(
+                    value = "INVOKE",
+                    target = "Lnet/minecraft/client/gui/GameGui;handleChat(Lnet/minecraft/text/MessageType;Lnet/minecraft/text/Text;)V"
+            ),
+            cancellable = true
+    )
+    private void litefabric$handleChat(ChatMessageS2CPacket packet, CallbackInfo ci) {
         Text original = packet.getMessage();
         if (original == null) return;
         Text filtered = LiteFabric.getInstance().filterChat(original);

@@ -1,8 +1,8 @@
 package de.skyrising.litefabric.runtime;
 
-import com.enderzombie102.modmenu.api.Badge;
-import com.enderzombie102.modmenu.api.ConfigScreenFactory;
-import com.enderzombie102.modmenu.api.ModMenuApi;
+import com.terraformersmc.modmenu.api.ConfigScreenFactory;
+//import com.enderzombie102.modmenu.api.Badge;
+import com.terraformersmc.modmenu.api.ModMenuApi;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -18,11 +18,12 @@ public class ModMenuCompat implements ModMenuApi {
         }
         return factories;
     }
-
+/*
+    // TODO: badges with ornithe modmenu port?
     @Override
     public void onSetupBadges() {
         Badge.register("modmenu.badge.liteloader", 0xff70531f, 0xff47391e, "liteloader");
-    }
+    }*/
 
     static {
         // register the badge only for enders port

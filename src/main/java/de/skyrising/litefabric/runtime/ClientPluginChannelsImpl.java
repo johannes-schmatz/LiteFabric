@@ -4,10 +4,11 @@ import de.skyrising.litefabric.liteloader.PluginChannelListener;
 import de.skyrising.litefabric.liteloader.core.ClientPluginChannels;
 import de.skyrising.litefabric.liteloader.core.PluginChannels;
 import io.netty.buffer.Unpooled;
-import net.minecraft.client.MinecraftClient;
+
+import net.minecraft.client.Minecraft;
 import net.minecraft.network.packet.c2s.play.CustomPayloadC2SPacket;
 import net.minecraft.network.packet.s2c.play.CustomPayloadS2CPacket;
-import net.minecraft.util.PacketByteBuf;
+import net.minecraft.network.PacketByteBuf;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -41,7 +42,7 @@ public class ClientPluginChannelsImpl extends ClientPluginChannels {
         if (customPayload == null) return;
         String channel = customPayload.getChannel();
         if (channel == null) return;
-        PacketByteBuf data = customPayload.getPayload();
+        PacketByteBuf data = customPayload.getData();
         if ("REGISTER".equals(channel)) {
             onRegisterPacketReceived(data);
         } else if (pluginChannels.containsKey(channel)) {
@@ -63,7 +64,7 @@ public class ClientPluginChannelsImpl extends ClientPluginChannels {
     }
 
     private static boolean dispatch(String channel, PacketByteBuf data) {
-        MinecraftClient client = MinecraftClient.getInstance();
+        Minecraft client = Minecraft.getInstance();
         if (client.player == null || client.player.networkHandler == null) return false;
         client.player.networkHandler.sendPacket(new CustomPayloadC2SPacket(channel, data));
         return true;

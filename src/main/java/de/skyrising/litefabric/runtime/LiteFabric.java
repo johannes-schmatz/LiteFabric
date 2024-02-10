@@ -7,16 +7,16 @@ import net.fabricmc.loader.api.Version;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.network.ServerInfo;
-import net.minecraft.client.util.Window;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.options.ServerListEntry;
+import net.minecraft.client.render.Window;
+import net.minecraft.client.resource.pack.ResourcePack;
 import net.minecraft.entity.Entity;
-import net.minecraft.network.listener.PacketListener;
+import net.minecraft.network.handler.PacketHandler;
 import net.minecraft.network.packet.s2c.login.LoginSuccessS2CPacket;
-import net.minecraft.network.packet.s2c.play.GameJoinS2CPacket;
-import net.minecraft.resource.ResourcePack;
+import net.minecraft.network.packet.s2c.play.LoginS2CPacket;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.server.command.CommandManager;
+import net.minecraft.server.command.handler.CommandManager;
 import net.minecraft.text.LiteralText;
 import net.minecraft.text.Text;
 
@@ -113,7 +113,7 @@ public class LiteFabric {
 		}
 	}
 
-	public void onInitCompleted(MinecraftClient client){
+	public void onInitCompleted(Minecraft client){
 		LiteLoader liteLoader = LiteLoader.getInstance();
 		try {
 			ListenerType.MH_INIT_COMPLETE.invokeExact(client, liteLoader);
@@ -122,10 +122,10 @@ public class LiteFabric {
 		}
 	}
 
-	public void onTick(MinecraftClient client, boolean clock, float partialTicks){
+	public void onTick(Minecraft client, boolean clock, float partialTicks){
 		input.onTick();
 		configManager.tick();
-		Entity cameraEntity = client.getCameraEntity();
+		Entity cameraEntity = client.getCamera();
 		boolean inGame = cameraEntity != null && cameraEntity.world != null;
 		try {
 			ListenerType.MH_TICK.invokeExact(client, partialTicks, inGame, clock);
@@ -168,7 +168,7 @@ public class LiteFabric {
 		}
 	}
 
-	public void onPostLogin(PacketListener packetListener, LoginSuccessS2CPacket loginPacket) {
+	public void onPostLogin(PacketHandler packetListener, LoginSuccessS2CPacket loginPacket) {
 		clientPluginChannels.onPostLogin();
 		try {
 			ListenerType.MH_POST_LOGIN.invokeExact(packetListener, loginPacket);
@@ -177,7 +177,7 @@ public class LiteFabric {
 		}
 	}
 
-	public void onJoinGame(PacketListener packetListener, GameJoinS2CPacket joinPacket, ServerInfo serverData) {
+	public void onJoinGame(PacketHandler packetListener, LoginS2CPacket joinPacket, ServerListEntry serverData) {
 		ListenerType<PreJoinGameListener> preJoinGame = ListenerType.PRE_JOIN_GAME;
 		if (preJoinGame.hasListeners()) {
 			for (PreJoinGameListener listener : preJoinGame.getListeners()) {
@@ -197,7 +197,7 @@ public class LiteFabric {
 	public void onInitServer(MinecraftServer server) {
 		ListenerType<ServerCommandProvider> serverCommandProviders = ListenerType.SERVER_COMMAND_PROVIDER;
 		if (serverCommandProviders.hasListeners()) {
-			CommandManager manager = (CommandManager) server.getCommandManager();
+			CommandManager manager = (CommandManager) server.getCommandHandler();
 			for (ServerCommandProvider provider : serverCommandProviders.getListeners()) {
 				provider.provideCommands(manager);
 			}
@@ -206,7 +206,7 @@ public class LiteFabric {
 
 	public void onPreRenderHUD() {
 		if (!ListenerType.HUD_RENDER.hasListeners()) return;
-		Window window = new Window(MinecraftClient.getInstance());
+		Window window = new Window(Minecraft.getInstance());
 		try {
 			ListenerType.MH_HUD_RENDER_PRE.invokeExact(window.getWidth(), window.getHeight());
 		} catch (Throwable e) {
@@ -216,7 +216,7 @@ public class LiteFabric {
 
 	public void onPostRenderHUD() {
 		if (!ListenerType.HUD_RENDER.hasListeners()) return;
-		Window window = new Window(MinecraftClient.getInstance());
+		Window window = new Window(Minecraft.getInstance());
 		try {
 			ListenerType.MH_HUD_RENDER_POST.invokeExact(window.getWidth(), window.getHeight());
 		} catch (Throwable e) {
@@ -226,9 +226,9 @@ public class LiteFabric {
 
 	private boolean wasFullscreen;
 	public void onResize() {
-		MinecraftClient client = MinecraftClient.getInstance();
+		Minecraft client = Minecraft.getInstance();
 
-		boolean fullscreen = client.isFullscreen();
+		boolean fullscreen = client.isWindowFocused();
 		boolean fullscreenChanged = fullscreen != wasFullscreen;
 
 		if (fullscreenChanged) {
@@ -254,13 +254,13 @@ public class LiteFabric {
 		ListenerType<ChatFilter> chatFilters = ListenerType.CHAT_FILTER;
 		if (!chatFilters.hasListeners()) return original;
 		Text result = original;
-		String message = original.asFormattedString();
+		String message = original.getFormattedContent();
 		for (ChatFilter filter : chatFilters.getListeners()) {
 			LiteLoaderEventBroker.ReturnValue<Text> retVal = new LiteLoaderEventBroker.ReturnValue<>();
 			if (filter.onChat(result, message, retVal)) {
 				result = retVal.get();
 				if (result == null) result = new LiteralText("");
-				message = result.asFormattedString();
+				message = result.getFormattedContent();
 			} else {
 				return null;
 			}

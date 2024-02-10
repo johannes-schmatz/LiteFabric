@@ -1,8 +1,9 @@
 package de.skyrising.litefabric.liteloader.gl;
 
 import com.mojang.blaze3d.platform.GlStateManager;
-import net.minecraft.client.render.VertexFormat;
-import net.minecraft.client.render.VertexFormats;
+
+import com.mojang.blaze3d.vertex.DefaultVertexFormat;
+import com.mojang.blaze3d.vertex.VertexFormat;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.util.glu.GLU;
 
@@ -12,18 +13,18 @@ import java.nio.FloatBuffer;
 import java.nio.IntBuffer;
 
 public class GL {
-    public static final VertexFormat VF_BLOCK = VertexFormats.BLOCK;
-    public static final VertexFormat VF_ITEM = VertexFormats.BLOCK_NORMALS;
-    public static final VertexFormat VF_OLDMODEL_POSITION_TEX_NORMAL = VertexFormats.POSITION_TEXTURE_NORMAL;
-    public static final VertexFormat VF_PARTICLE_POSITION_TEX_COLOR_LMAP = VertexFormats.PARTICLE;
-    public static final VertexFormat VF_POSITION = VertexFormats.POSITION;
-    public static final VertexFormat VF_POSITION_COLOR = VertexFormats.POSITION_COLOR;
-    public static final VertexFormat VF_POSITION_TEX = VertexFormats.POSITION_TEXTURE;
-    public static final VertexFormat VF_POSITION_NORMAL = VertexFormats.POSITION_NORMAL;
-    public static final VertexFormat VF_POSITION_TEX_COLOR = VertexFormats.POSITION_TEXTURE_COLOR;
-    public static final VertexFormat VF_POSITION_TEX_NORMAL = VertexFormats.POSITION_TEXTURE_NORMAL;
-    public static final VertexFormat VF_POSITION_TEX_LMAP_COLOR = VertexFormats.POSITION_TEXTURE2_COLOR;
-    public static final VertexFormat VF_POSITION_TEX_COLOR_NORMAL = VertexFormats.POSITION_TEXTURE_COLOR_NORMAL;
+    public static final VertexFormat VF_BLOCK = DefaultVertexFormat.BLOCK;
+    public static final VertexFormat VF_ITEM = DefaultVertexFormat.BLOCK_NORMALS;
+    public static final VertexFormat VF_OLDMODEL_POSITION_TEX_NORMAL = DefaultVertexFormat.POSITION_TEX_NORMAL;
+    public static final VertexFormat VF_PARTICLE_POSITION_TEX_COLOR_LMAP = DefaultVertexFormat.PARTICLE;
+    public static final VertexFormat VF_POSITION = DefaultVertexFormat.POSITION;
+    public static final VertexFormat VF_POSITION_COLOR = DefaultVertexFormat.POSITION_COLOR;
+    public static final VertexFormat VF_POSITION_TEX = DefaultVertexFormat.POSITION_TEX;
+    public static final VertexFormat VF_POSITION_NORMAL = DefaultVertexFormat.POSITION_NORMAL;
+    public static final VertexFormat VF_POSITION_TEX_COLOR = DefaultVertexFormat.POSITION_TEX_COLOR;
+    public static final VertexFormat VF_POSITION_TEX_NORMAL = DefaultVertexFormat.POSITION_TEX_NORMAL;
+    public static final VertexFormat VF_POSITION_TEX_LMAP_COLOR = DefaultVertexFormat.POSITION_TEX2_COLOR;
+    public static final VertexFormat VF_POSITION_TEX_COLOR_NORMAL = DefaultVertexFormat.POSITION_TEX_COLOR_NORMAL;
 
     public static void glPushAttrib() {
         // GL_ENABLE_BIT | GL_LIGHTING_BIT
@@ -67,11 +68,11 @@ public class GL {
     }
 
     public static void glLight(int light, int pname, FloatBuffer params) {
-        GlStateManager.method_12281(light, pname, params);
+        GlStateManager.light(light, pname, params);
     }
 
     public static void glLightModel(int pname, FloatBuffer params) {
-        GlStateManager.method_12282(pname, params);
+        GlStateManager.lightModel(pname, params);
     }
 
     public static void glLightModeli(int pname, int param) {
@@ -130,8 +131,8 @@ public class GL {
         GlStateManager.disableFog();
     }
 
-    public static void glSetFogMode(GlStateManager.class_2867 mode) {
-        GlStateManager.method_12285(mode);
+    public static void glSetFogMode(GlStateManager.FogMode mode) {
+        GlStateManager.fogMode(mode);
     }
 
     public static void glSetFogDensity(float density) {
@@ -147,11 +148,11 @@ public class GL {
     }
 
     public static void glSetFogColour(FloatBuffer colour) {
-        GlStateManager.method_12298(GL11.GL_FOG_COLOR, colour);
+        GlStateManager.fog(GL11.GL_FOG_COLOR, colour);
     }
 
     public static void glFogi(int pname, int param) {
-        GlStateManager.method_12300(pname, param);
+        GlStateManager.fog(pname, param);
     }
 
     public static void glFogf(int pname, float param) {
@@ -166,16 +167,16 @@ public class GL {
         GlStateManager.disableCull();
     }
 
-    public static void glCullFace(GlStateManager.class_2865 mode) {
-        GlStateManager.method_12284(mode);
+    public static void glCullFace(GlStateManager.CullFace mode) {
+        GlStateManager.cullFace(mode);
     }
 
     public static void glEnablePolygonOffset() {
-        GlStateManager.enablePolyOffset();
+        GlStateManager.enablePolygonOffset();
     }
 
     public static void glDisablePolygonOffset() {
-        GlStateManager.disablePolyOffset();
+        GlStateManager.disablePolygonOffset();
     }
 
     public static void glPolygonOffset(float factor, float units) {
@@ -183,31 +184,31 @@ public class GL {
     }
 
     public static void glEnableColorLogic() {
-        GlStateManager.enableColorLogic();
+        GlStateManager.enableColorLogicOp();
     }
 
     public static void glDisableColorLogic() {
-        GlStateManager.disableColorLogic();
+        GlStateManager.disableColorLogicOp();
     }
 
     public static void glLogicOp(int opcode) {
         GlStateManager.logicOp(opcode);
     }
 
-    public static void glEnableTexGenCoord(GlStateManager.TexCoord tex) {
-        GlStateManager.method_12289(tex);
+    public static void glEnableTexGenCoord(GlStateManager.TexGenMode tex) {
+        GlStateManager.enableTexGen(tex);
     }
 
-    public static void glDisableTexGenCoord(GlStateManager.TexCoord tex) {
-        GlStateManager.disableTexCoord(tex);
+    public static void glDisableTexGenCoord(GlStateManager.TexGenMode tex) {
+        GlStateManager.disableTexGen(tex);
     }
 
-    public static void glTexGeni(GlStateManager.TexCoord tex, int mode) {
-        GlStateManager.genTex(tex, mode);
+    public static void glTexGeni(GlStateManager.TexGenMode tex, int mode) {
+        GlStateManager.texGenMode(tex, mode);
     }
 
-    public static void glTexGen(GlStateManager.TexCoord tex, int pname, FloatBuffer params) {
-        GlStateManager.genTex(tex, pname, params);
+    public static void glTexGen(GlStateManager.TexGenMode tex, int pname, FloatBuffer params) {
+        GlStateManager.texGenParam(tex, pname, params);
     }
 
     public static void glSetActiveTextureUnit(int texture) {
@@ -223,7 +224,7 @@ public class GL {
     }
 
     public static int glGenTextures() {
-        return GlStateManager.getTexLevelParameter();
+        return GlStateManager.genTextures();
     }
 
     public static void glDeleteTextures(int textureName) {
@@ -255,7 +256,7 @@ public class GL {
     }
 
     public static void glViewport(int x, int y, int width, int height) {
-        GlStateManager.viewPort(x, y, width, height);
+        GlStateManager.viewport(x, y, width, height);
     }
 
     public static void glColorMask(boolean red, boolean green, boolean blue, boolean alpha) {
@@ -361,7 +362,7 @@ public class GL {
     }
 
     public static void glMultMatrix(FloatBuffer m) {
-        GlStateManager.multiMatrix(m);
+        GlStateManager.multMatrix(m);
     }
 
     public static void glColor4f(float red, float green, float blue, float alpha) {
@@ -377,15 +378,15 @@ public class GL {
     }
 
     public static void glEnableClientState(int cap) {
-        GlStateManager.method_12316(cap);
+        GlStateManager.enableClientState(cap); // TODO: ensure this is correct... it could be swapped with the method below; mumfrey calls the method func_187410_q here...
     }
 
     public static void glDisableClientState(int cap) {
-        GlStateManager.method_12317(cap);
+        GlStateManager.disableClientState(cap); // TODO: ensure this is correct... it could be swapped with the method above; mumfrey calls the method func_187429_p here...
     }
 
     public static void glDrawArrays(int mode, int first, int count) {
-        GlStateManager.method_12313(mode, first, count);
+        GlStateManager.drawArrays(mode, first, count);
     }
 
     public static void glCallList(int list) {
@@ -397,31 +398,31 @@ public class GL {
     }
 
     public static int glGenLists(int range) {
-        return GlStateManager.method_12319(range);
+        return GlStateManager.genLists(range);
     }
 
     public static void glNewList(int list, int mode) {
-        GlStateManager.method_12312(list, mode);
+        GlStateManager.newList(list, mode);
     }
 
     public static void glEndList() {
-        GlStateManager.method_12270();
+        GlStateManager.endList();
     }
 
     public static void glDeleteLists(int list, int range) {
-        GlStateManager.method_12310(list, range);
+        GlStateManager.deleteLists(list, range);
     }
 
     public static void glLineWidth(float width) {
-        GlStateManager.method_12304(width);
+        GlStateManager.lineWidth(width);
     }
 
     public static void glPolygonMode(int face, int mode) {
-        GlStateManager.method_12306(face, mode);
+        GlStateManager.polygonMode(face, mode);
     }
 
     public static void glPixelStorei(int pname, int param) {
-        GlStateManager.method_12314(pname, param);
+        GlStateManager.pixelStore(pname, param);
     }
 
     public static void glReadPixels(int x, int y, int width, int height, int format, int type, ByteBuffer pixels) {
@@ -429,7 +430,7 @@ public class GL {
     }
 
     public static void glReadPixels(int x, int y, int width, int height, int format, int type, IntBuffer pixels) {
-        GlStateManager.method_12277(x, y, width, height, format, type, pixels);
+        GlStateManager.readPixels(x, y, width, height, format, type, pixels);
     }
 
     public static void glGetTexImage(int target, int level, int format, int type, ByteBuffer pixels) {
@@ -437,7 +438,7 @@ public class GL {
     }
 
     public static void glGetTexImage(int target, int level, int format, int type, IntBuffer pixels) {
-        GlStateManager.method_12278(target, level, format, type, pixels);
+        GlStateManager.getTexImage(target, level, format, type, pixels);
     }
 
     public static void glNormalPointer(int stride, FloatBuffer pointer) {
@@ -445,7 +446,7 @@ public class GL {
     }
 
     public static void glNormalPointer(int type, int stride, ByteBuffer pointer) {
-        GlStateManager.method_12280(type, stride, pointer);
+        GlStateManager.normalPointer(type, stride, pointer);
     }
 
     public static void glTexCoordPointer(int size, int stride, FloatBuffer pointer) {
@@ -453,11 +454,11 @@ public class GL {
     }
 
     public static void glTexCoordPointer(int size, int type, int stride, int pointerBufferOffset) {
-        GlStateManager.method_12302(size, type, stride, pointerBufferOffset);
+        GlStateManager.texCoordPointer(size, type, stride, pointerBufferOffset);
     }
 
     public static void glTexCoordPointer(int size, int type, int stride, ByteBuffer pointer) {
-        GlStateManager.method_12279(size, type, stride, pointer);
+        GlStateManager.texCoordPointer(size, type, stride, pointer);
     }
 
     public static void glVertexPointer(int size, int stride, FloatBuffer pointer) {
@@ -465,7 +466,7 @@ public class GL {
     }
 
     public static void glVertexPointer(int size, int type, int stride, ByteBuffer pointer) {
-        GlStateManager.method_12296(size, type, stride, pointer);
+        GlStateManager.vertexPointer(size, type, stride, pointer);
     }
 
     public static void glEdgeFlagPointer(int stride, ByteBuffer pointer) {

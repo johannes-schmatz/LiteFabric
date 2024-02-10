@@ -1,7 +1,7 @@
 package de.skyrising.litefabric.liteloader.core;
 
 import de.skyrising.litefabric.liteloader.CommonPluginChannelListener;
-import net.minecraft.util.PacketByteBuf;
+import net.minecraft.network.PacketByteBuf;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 

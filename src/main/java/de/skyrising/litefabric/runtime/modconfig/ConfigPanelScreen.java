@@ -85,6 +85,6 @@ public class ConfigPanelScreen extends Screen implements ConfigPanelHost {
 
     @Override
     public void close() {
-        client.openScreen(parent);
+        minecraft.openScreen(parent);
     }
 }

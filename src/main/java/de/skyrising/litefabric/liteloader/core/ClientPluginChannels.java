@@ -2,7 +2,7 @@ package de.skyrising.litefabric.liteloader.core;
 
 import de.skyrising.litefabric.liteloader.PluginChannelListener;
 import net.minecraft.network.packet.s2c.play.CustomPayloadS2CPacket;
-import net.minecraft.util.PacketByteBuf;
+import net.minecraft.network.PacketByteBuf;
 
 public abstract class ClientPluginChannels extends PluginChannels<PluginChannelListener> {
     protected static ClientPluginChannels instance;

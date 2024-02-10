@@ -1,6 +1,6 @@
 package de.skyrising.litefabric.liteloader;
 
-import net.minecraft.client.render.WorldRenderer;
+import net.minecraft.client.render.world.WorldRenderer;
 
 public interface PreRenderListener {
     void onRenderWorld(float partialTicks);
