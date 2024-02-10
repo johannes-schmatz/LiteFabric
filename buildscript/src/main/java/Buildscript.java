@@ -23,7 +23,7 @@ import java.util.stream.Collectors;
 public class Buildscript extends SimpleFabricProject {
 	@Override
 	public String getMavenGroup(){
-		return "litefabric";
+		return "liteornithe";
 	}
 
 	@Override

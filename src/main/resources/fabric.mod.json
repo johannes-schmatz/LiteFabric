@@ -1,28 +1,28 @@
 {
 	"schemaVersion": 1,
-	"id": "litefabric",
+	"id": "liteornithe",
 	"version": "0.0.0-dev",
-	"name": "LiteFabric",
-	"description": "Launch LiteLoader mods with Fabric",
+	"name": "LiteOrnithe",
+	"description": "Launch LiteLoader mods with Ornithe",
 	"authors": [
 		"skyrising",
-		"Zeichenreihe"
+		"zeichenreihe"
 	],
 	"contact": {
 		"homepage": "https://skyrising.xyz",
-		"sources": "https://github.com/skyrising/LiteFabric",
-		"issues": "https://github.com/skyrising/LiteFabric/issues"
+		"sources": "https://github.com/zeichenreihe/LiteOrnithe",
+		"issues": "https://github.com/zeichenreihe/LiteOrnithe/issues"
 	},
 	"license": "MIT",
 	"icon": "assets/litefabric/icon.png",
 	"environment": "client",
 	"entrypoints": {
 		"modmenu": [
-			"de.skyrising.litefabric.runtime.ModMenuCompat"
+			"io.github.zeichenreihe.liteornithe.runtime.ModMenuCompat"
 		]
 	},
 	"mixins": [
-		"litefabric.mixins.json"
+		"liteornithe.mixins.json"
 	],
 	"depends": {
 		"minecraft": "1.12.2"

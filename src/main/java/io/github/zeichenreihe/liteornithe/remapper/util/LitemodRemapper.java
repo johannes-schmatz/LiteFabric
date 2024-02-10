@@ -175,7 +175,7 @@ public class LitemodRemapper extends Remapper implements IRemapper {
     @Override
     public String map(String internalName) {
         if (internalName.startsWith(LITELOADER_PACKAGE)) {
-            return "de/skyrising/litefabric/liteloader/" + internalName.substring(LITELOADER_PACKAGE.length());
+            return "io/github/zeichenreihe/liteornithe/liteloader/" + internalName.substring(LITELOADER_PACKAGE.length());
         }
 
         ClassDef def = classes.get(internalName);
