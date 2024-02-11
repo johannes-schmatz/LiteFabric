@@ -91,6 +91,7 @@ public class Buildscript extends SimpleFabricProject {
 				),
 				FabricContext.ModDependencyFlag.RUNTIME
 		);
+		*/
 	}
 
 	@Override

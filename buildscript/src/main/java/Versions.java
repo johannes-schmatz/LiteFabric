@@ -10,7 +10,7 @@ public enum Versions {
 	QUILT_FLOWER("https://maven.quiltmc.org/repository/release", "org.quiltmc", "quiltflower", "1.8.1"),
 	MODMENU(Maven.MAVEN_LOCAL, "de.skyrising", "modmenu", "1.16.9+1.12.2.76ef206"),
 
-	V2_QUILT_LOADER("https://maven.quiltmc.org/repository/release", "org.quiltmc", "quilt-loader", "0.19.1"),
+	V2_QUILT_LOADER("https://maven.quiltmc.org/repository/release", "org.quiltmc", "quilt-loader", "0.23.1"),
 	V2_FEATHER("https://maven.ornithemc.net/releases", "net.ornithemc", "feather", "1.12.2+build.19"),
 	V2_CALAMUS("https://maven.ornithemc.net/releases", "net.ornithemc", "calamus-intermediary", "1.12.2"),
 	V2_MODMENU("https://maven.ornithemc.net/releases", "com.terraformersmc", "modmenu", "0.2.0+mc1.12.2")
