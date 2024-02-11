@@ -4,6 +4,7 @@ import io.github.coolcrabs.brachyura.dependency.JavaJarDependency;
 import io.github.coolcrabs.brachyura.fabric.*;
 import io.github.coolcrabs.brachyura.fabric.FabricContext.ModDependencyCollector;
 import io.github.coolcrabs.brachyura.maven.Maven;
+import io.github.coolcrabs.brachyura.maven.MavenId;
 import io.github.coolcrabs.brachyura.minecraft.Minecraft;
 import io.github.coolcrabs.brachyura.minecraft.VersionMeta;
 import io.github.coolcrabs.brachyura.processing.sinks.AtomicZipProcessingSink;
@@ -11,9 +12,11 @@ import io.github.coolcrabs.brachyura.processing.sources.DirectoryProcessingSourc
 import io.github.coolcrabs.brachyura.project.Task;
 import net.fabricmc.mappingio.tree.MappingTree;
 
+import java.io.File;
 import java.nio.file.Path;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
@@ -58,6 +61,36 @@ public class Buildscript extends SimpleFabricProject {
 				FabricContext.ModDependencyFlag.COMPILE,
 				FabricContext.ModDependencyFlag.RUNTIME
 		);
+		// modmenu needs osl-entrypoints for running
+		d.add(
+				Maven.getMavenJarDep("https://maven.ornithemc.net/releases",
+						new MavenId("net.ornithemc.osl", "entrypoints", "0.4.2+mc13w16a-04192037-mc1.14.4")
+				),
+				FabricContext.ModDependencyFlag.RUNTIME
+		);
+		// and it also needs osl-resource-loader
+		d.add(
+				Maven.getMavenJarDep("https://maven.ornithemc.net/releases",
+						new MavenId("net.ornithemc.osl", "resource-loader", "0.4.3+mc13w26a-mc1.12.2")
+				),
+				FabricContext.ModDependencyFlag.RUNTIME
+		);
+
+		// the resource loader then needs livecycle-events...
+		d.add(
+				Maven.getMavenJarDep("https://maven.ornithemc.net/releases",
+						new MavenId("net.ornithemc.osl", "lifecycle-events", "0.5.2+mc13w36a-09051446-mc1.13")
+				),
+				FabricContext.ModDependencyFlag.RUNTIME
+		);
+
+		// entry points and resource-loader need osl core..
+		d.add(
+				Maven.getMavenJarDep("https://maven.ornithemc.net/releases",
+						new MavenId("net.ornithemc.osl", "core", "0.5.0")
+				),
+				FabricContext.ModDependencyFlag.RUNTIME
+		);
 	}
 
 	@Override
@@ -89,8 +122,37 @@ public class Buildscript extends SimpleFabricProject {
 
 		@Override
 		public List<String> ideVmArgs(boolean client) {
-			List<String> args = super.ideVmArgs(client);
+			ArrayList<String> args = new ArrayList<>();
+
+			// for fabric
+			args.add("-Dfabric.development=true");
+			args.add("-Dfabric.remapClasspathFile=" + context.runtimeRemapClasspath.get());
+			args.add("-Dfabric.log.disableAnsi=false");
+
+			// for quilt
+			args.add("-Dloader.development=true");
+			args.add("-Dloader.remapClasspathFile=" + context.runtimeRemapClasspath.get());
+			args.add("-Dloader.log.disableAnsi=false");
+
+			// for both
+			try {
+				args.add("-Dlog4j.configurationFile=" + writeLog4jXml());
+				args.add("-Dlog4j2.formatMsgNoLookups=true");
+			} catch (Exception e) {
+				throw Util.sneak(e);
+			}
+
+			if (client) {
+				String natives = context.extractedNatives.get().stream().map(Path::toString).collect(Collectors.joining(File.pathSeparator));
+				args.add("-Djava.library.path=" + natives);
+				args.add("-Dtorg.lwjgl.librarypath=" + natives);
+				if (OsUtil.OS == OsUtil.Os.OSX) {
+					args.add("-XstartOnFirstThread");
+				}
+			}
+
 			args.add("-D" + "java.awt.headless=true"); // that way fabric loader doesn't open the pop-up screen
+
 			return args;
 		}
 	}
