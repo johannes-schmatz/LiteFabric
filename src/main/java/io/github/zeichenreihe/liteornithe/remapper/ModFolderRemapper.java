@@ -17,18 +17,6 @@ import java.nio.file.attribute.BasicFileAttributes;
 import java.util.*;
 
 public class ModFolderRemapper {
-	private static LitemodRemapper remapper = null;
-
-	public static LitemodRemapper getRemapper() {
-		if (remapper == null) {
-			String targetNamespace = FabricLoader.getInstance().getMappingResolver().getCurrentRuntimeNamespace();
-			TinyTree mappings = getMappings();
-			remapper = new LitemodRemapper(mappings, targetNamespace);
-		}
-
-		return remapper;
-	}
-
 	private static TinyTree getMappings() {
 		String mappings = "mappings/mappings.tiny";
 		try (InputStream inputStream = ModFolderRemapper.class.getClassLoader().getResourceAsStream(mappings)) {
@@ -82,8 +70,10 @@ public class ModFolderRemapper {
 
 		Profiler.swap("preRemap");
 
-		// ensure the remapper exists
-		getRemapper();
+		// Create the remapper
+		String targetNamespace = FabricLoader.getInstance().getMappingResolver().getCurrentRuntimeNamespace();
+		TinyTree mappings = getMappings();
+		LitemodRemapper remapper = new LitemodRemapper(mappings, targetNamespace);
 
 		Profiler.swap("remap");
 

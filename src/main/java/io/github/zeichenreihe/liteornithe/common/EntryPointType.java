@@ -46,7 +46,7 @@ public class EntryPointType {
 	}
 
 	// TODO: This api provides the ability to remap a crash log from obfuscated to named. This should probably be properly exposed and documented.
-	public static String remapCrashLog(String crashLog) {
-		return ModFolderRemapper.getRemapper().remapCrashLog(crashLog);
-	}
+	//public static String remapCrashLog(String crashLog) {
+	//	return ModFolderRemapper.getRemapper().remapCrashLog(crashLog);
+	//}
 }
