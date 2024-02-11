@@ -1,21 +1,21 @@
 {
 	"required": true,
-	"package": "de.skyrising.litefabric.mixin",
+	"package": "io.github.zeichenreihe.liteornithe.mixin",
 	"compatibilityLevel": "JAVA_8",
 	"mixins": [
-		"io.github.zeichenreihe.liteornithe.mixin.MinecraftServerMixin"
+		"MinecraftServerMixin"
 	],
 	"client": [
-		"io.github.zeichenreihe.liteornithe.mixin.ButtonWidgetAccessor",
-		"io.github.zeichenreihe.liteornithe.mixin.ChatMessageS2CPacketAccessor",
-		"io.github.zeichenreihe.liteornithe.mixin.ClientLoginNetworkHandlerMixin",
-		"io.github.zeichenreihe.liteornithe.mixin.ClientPlayerEntityMixin",
-		"io.github.zeichenreihe.liteornithe.mixin.ClientPlayNetworkHandlerMixin",
-		"io.github.zeichenreihe.liteornithe.mixin.GameRendererMixin",
-		"io.github.zeichenreihe.liteornithe.mixin.KeyBindingAccessor",
-		"io.github.zeichenreihe.liteornithe.mixin.MinecraftClientAccessor",
-		"io.github.zeichenreihe.liteornithe.mixin.MinecraftClientMixin",
-		"io.github.zeichenreihe.liteornithe.mixin.ModRemappingCallbackMixin",
-		"io.github.zeichenreihe.liteornithe.mixin.TextFieldWidgetMixin"
+		"ButtonWidgetAccessor",
+		"ChatMessageS2CPacketAccessor",
+		"ClientLoginNetworkHandlerMixin",
+		"ClientPlayerEntityMixin",
+		"ClientPlayNetworkHandlerMixin",
+		"GameRendererMixin",
+		"KeyBindingAccessor",
+		"MinecraftClientAccessor",
+		"MinecraftClientMixin",
+		"ModRemappingCallbackMixin",
+		"TextFieldWidgetMixin"
 	]
 }

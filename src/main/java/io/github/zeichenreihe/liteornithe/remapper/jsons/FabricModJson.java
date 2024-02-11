@@ -95,9 +95,9 @@ public class FabricModJson {
 
 		String preLaunchClass = EntryPointType.getPreLaunchEntryPoint(id, '.');
 
-		// force mc 1.12.2 and the use of litefabric
+		// force mc 1.12.2 and the use of liteornithe
 		depends.put("minecraft", "1.12.2");
-		depends.put("litefabric", "*");
+		depends.put("liteornithe", "*");
 
 		// add the old dependencies
 		if (liteModJson.dependsOn != null) {
