@@ -9,14 +9,13 @@ import net.minecraft.client.resource.metadata.ResourceMetadataSerializerRegistry
 import net.minecraft.client.resource.pack.ResourcePack;
 import net.minecraft.client.resource.pack.ZippedResourcePack;
 import net.minecraft.resource.Identifier;
+
+import net.fabricmc.loader.api.metadata.ModOrigin;
 import org.apache.commons.io.IOUtils;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.image.BufferedImage;
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
+import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
@@ -29,8 +28,20 @@ import java.util.stream.Stream;
 public class ModResourcePack extends ZippedResourcePack implements ResourcePack {
 	private final ModContainer container;
 	private final Path root;
-	public ModResourcePack(String modId, ModContainer container) {
-		super(container.getOrigin().getPaths().get(0).toFile());
+
+	@Nullable
+	public static ModResourcePack create(String modId, ModContainer container) {
+		ModOrigin origin = container.getOrigin();
+		if (origin.getKind().equals(ModOrigin.Kind.UNKNOWN)) {
+			return null;
+		} else {
+			File file = container.getOrigin().getPaths().get(0).toFile();
+			return new ModResourcePack(modId, container, file);
+		}
+	}
+
+	private ModResourcePack(String modId, ModContainer container, File file) {
+		super(file);
 		this.container = container;
 		this.root = container.getRootPaths().get(0);
 

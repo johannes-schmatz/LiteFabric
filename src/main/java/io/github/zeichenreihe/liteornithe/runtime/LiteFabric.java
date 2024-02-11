@@ -52,7 +52,12 @@ public class LiteFabric {
 			// java doesn't have resources, mcs are already added
 			if ("java".equals(modId) || "minecraft".equals(modId)) continue;
 
-			resourcePacks.add(new ModResourcePack(modId, container));
+			ModResourcePack mrp = ModResourcePack.create(modId, container);
+			if (mrp != null) {
+				resourcePacks.add(mrp);
+			} else {
+				System.out.println("ModResourcePack for modid " + modId + " is null, because there's no proper source to take from");
+			}
 		}
 	}
 
