@@ -82,11 +82,11 @@ public class FabricModJson {
 			description = mcmodInfoJson.description;
 			authors = mcmodInfoJson.authors;
 			contact.put("homepage", mcmodInfoJson.url);
-			icon = mcmodInfoJson.logoFile.isEmpty() ? "pack.png" : mcmodInfoJson.logoFile;
+			icon = mcmodInfoJson.logoFile.isEmpty() ? null : mcmodInfoJson.logoFile;
 		} else {
 			description = liteModJson.description;
 			authors = Collections.singletonList(liteModJson.author);
-			icon = "pack.png";
+			icon = null;
 		}
 
 		String displayName = liteModJson.displayName;
