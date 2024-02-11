@@ -10,6 +10,8 @@ import io.github.coolcrabs.brachyura.minecraft.VersionMeta;
 import io.github.coolcrabs.brachyura.processing.sinks.AtomicZipProcessingSink;
 import io.github.coolcrabs.brachyura.processing.sources.DirectoryProcessingSource;
 import io.github.coolcrabs.brachyura.project.Task;
+import io.github.coolcrabs.brachyura.util.OsUtil;
+import io.github.coolcrabs.brachyura.util.Util;
 import net.fabricmc.mappingio.tree.MappingTree;
 
 import java.io.File;
@@ -55,6 +57,15 @@ public class Buildscript extends SimpleFabricProject {
 	public void getModDependencies(ModDependencyCollector d) {
 		// Fix for brachyura using the default java User-Agent, which is blocked by cloudflare
 		System.setProperty("http.agent", "brachyura http agent");
+
+		d.add(
+				//Versions.MODMENU.ofMaven(Maven::getMavenJarDep),
+				Versions.V2_MODMENU.ofMaven(Maven::getMavenJarDep),
+				FabricContext.ModDependencyFlag.COMPILE
+		);
+
+		/*
+		//TODO: figure out what else is missing as a dependency here (seems like key events?) it might also be worth to write a maven pom parser...
 		d.add(
 				//Versions.MODMENU.ofMaven(Maven::getMavenJarDep),
 				Versions.V2_MODMENU.ofMaven(Maven::getMavenJarDep),
