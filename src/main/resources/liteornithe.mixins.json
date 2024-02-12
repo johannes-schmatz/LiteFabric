@@ -3,7 +3,8 @@
 	"package": "io.github.zeichenreihe.liteornithe.mixin",
 	"compatibilityLevel": "JAVA_8",
 	"mixins": [
-		"MinecraftServerMixin"
+		"MinecraftServerMixin",
+		"ModMenuBadeFix"
 	],
 	"client": [
 		"ButtonWidgetAccessor",
