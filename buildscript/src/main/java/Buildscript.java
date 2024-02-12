@@ -49,7 +49,7 @@ public class Buildscript extends SimpleFabricProject {
 
 	@Override
 	public FabricLoader getLoader() {
-		//return Versions.FABRIC_LOADER.ofMaven(FabricLoader::new);
+		//return Versions.V1_FABRIC_LOADER.ofMaven(FabricLoader::new);
 		return Versions.V2_QUILT_LOADER.ofMaven(FabricLoader::new);
 	}
 
@@ -58,14 +58,6 @@ public class Buildscript extends SimpleFabricProject {
 		// Fix for brachyura using the default java User-Agent, which is blocked by cloudflare
 		System.setProperty("http.agent", "brachyura http agent");
 
-		d.add(
-				//Versions.MODMENU.ofMaven(Maven::getMavenJarDep),
-				Versions.V2_MODMENU.ofMaven(Maven::getMavenJarDep),
-				FabricContext.ModDependencyFlag.COMPILE
-		);
-
-		/*
-		//TODO: figure out what else is missing as a dependency here (seems like key events?) it might also be worth to write a maven pom parser...
 		d.add(
 				//Versions.MODMENU.ofMaven(Maven::getMavenJarDep),
 				Versions.V2_MODMENU.ofMaven(Maven::getMavenJarDep),
@@ -95,14 +87,30 @@ public class Buildscript extends SimpleFabricProject {
 				FabricContext.ModDependencyFlag.RUNTIME
 		);
 
-		// entry points and resource-loader need osl core..
+		// entry points and resource-loader need osl core...
 		d.add(
 				Maven.getMavenJarDep("https://maven.ornithemc.net/releases",
 						new MavenId("net.ornithemc.osl", "core", "0.5.0")
 				),
 				FabricContext.ModDependencyFlag.RUNTIME
 		);
-		*/
+
+		// possibly keybinds fixes it??
+		d.add(
+				Maven.getMavenJarDep("https://maven.ornithemc.net/releases",
+						new MavenId("net.ornithemc.osl", "keybinds", "0.1.2+mc17w16a-mc1.12.2")
+				),
+				FabricContext.ModDependencyFlag.RUNTIME
+		);
+
+		// osl needs this...
+		d.add(
+				Maven.getMavenJarDep("https://maven.quiltmc.org/repository/release",
+						new MavenId("org.quiltmc.parsers", "json", "0.2.1")
+				),
+				FabricContext.ModDependencyFlag.RUNTIME
+		);
+
 	}
 
 	@Override

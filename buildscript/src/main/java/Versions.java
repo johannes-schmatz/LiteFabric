@@ -5,6 +5,7 @@ import java.util.function.BiFunction;
 
 public enum Versions {
 	FABRIC_LOADER("https://maven.fabricmc.net", "net.fabricmc", "fabric-loader", "0.14.9"),
+	V1_FABRIC_LOADER("https://maven.fabricmc.net", "net.fabricmc", "fabric-loader", "0.14.23"),
 	LEGACY_YARN("https://maven.legacyfabric.net", "net.legacyfabric", "yarn", "1.12.2+build.442"),
 	LEGACY_INTERMEDIARY("https://maven.legacyfabric.net", "net.fabricmc", "intermediary", "1.12.2"),
 	QUILT_FLOWER("https://maven.quiltmc.org/repository/release", "org.quiltmc", "quiltflower", "1.8.1"),
